@@ -29,6 +29,7 @@ public final class SystemConstants {
     public static final int USER_TABLE_START_BLOCK = 6;
     public static final int GROUP_TABLE_START_BLOCK = 9;
     public static final int ROOT_DIRECTORY_START_BLOCK = 11;
+    public static final int DIRECTORY_TABLE_BLOCK_COUNT = 10;
     public static final int DATA_START_BLOCK = 21;
 
     public static final String ROOT_HOME_PATH = "/user/root";

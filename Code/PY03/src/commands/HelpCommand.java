@@ -22,6 +22,6 @@ public class HelpCommand implements Command {
             return;
         }
 
-        System.out.println("Comandos disponibles: useradd, groupadd, passwd, su, whoami, infoFS, clear, help, exit");
+        System.out.println("Comandos disponibles: useradd, groupadd, passwd, su, whoami, pwd, mkdir, cd, ls, infoFS, clear, help, exit");
     }
 }

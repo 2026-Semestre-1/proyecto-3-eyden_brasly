@@ -40,6 +40,10 @@ public class CommandRegistry {
         register(new PasswdCommand());
         register(new SuCommand());
         register(new WhoamiCommand());
+        register(new PwdCommand());
+        register(new MkdirCommand());
+        register(new CdCommand());
+        register(new LsCommand());
         register(new InfoFSCommand());
         register(new ClearCommand());
         register(new HelpCommand());

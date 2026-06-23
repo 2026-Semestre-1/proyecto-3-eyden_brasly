@@ -4,6 +4,9 @@
  */
 package filesystem;
 
+import filesystem.nodes.DirectoryTree;
+import java.io.IOException;
+
 /**
  * Representa un File System ya montado sobre el disco virtual.
  * No ejecuta comandos por si mismo; conserva las estructuras cargadas desde
@@ -18,6 +21,8 @@ public class FileSystem {
     private final Bitmap bitmap;
     private final BlockManager blockManager;
     private final String rootPasswordHash;
+    private final DirectoryTree directoryTree;
+    private final DirectoryTableStore directoryTableStore;
 
     public FileSystem(
             VirtualDisk disk,
@@ -25,7 +30,8 @@ public class FileSystem {
             SuperBlock superBlock,
             Bitmap bitmap,
             BlockManager blockManager,
-            String rootPasswordHash
+            String rootPasswordHash,
+            DirectoryTree directoryTree
     ) {
         this.disk = disk;
         this.mbr = mbr;
@@ -33,6 +39,8 @@ public class FileSystem {
         this.bitmap = bitmap;
         this.blockManager = blockManager;
         this.rootPasswordHash = rootPasswordHash;
+        this.directoryTree = directoryTree;
+        this.directoryTableStore = new DirectoryTableStore();
     }
 
     public VirtualDisk getDisk() {
@@ -57,5 +65,13 @@ public class FileSystem {
 
     public String getRootPasswordHash() {
         return rootPasswordHash;
+    }
+
+    public DirectoryTree getDirectoryTree() {
+        return directoryTree;
+    }
+
+    public void saveDirectories() throws IOException {
+        directoryTableStore.save(disk, directoryTree);
     }
 }

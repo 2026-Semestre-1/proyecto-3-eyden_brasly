@@ -22,8 +22,9 @@ public class FileSystemMounter {
         Bitmap bitmap = loadBitmap(disk);
         BlockManager blockManager = new BlockManager(bitmap);
         String rootPasswordHash = readRootPasswordHash(disk);
+        filesystem.nodes.DirectoryTree directoryTree = new DirectoryTableStore().load(disk);
 
-        return new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash);
+        return new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash, directoryTree);
     }
 
     public boolean existsDisk() {

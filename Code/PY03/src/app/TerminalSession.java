@@ -72,6 +72,10 @@ public class TerminalSession {
         return currentPath;
     }
 
+    public void setCurrentPath(String currentPath) {
+        this.currentPath = currentPath;
+    }
+
     public boolean isPrivileged() {
         return activeUser != null && SystemConstants.ROOT_USERNAME.equals(activeUser.getUsername());
     }

@@ -4,10 +4,31 @@
  */
 package commands;
 
+import app.TerminalSession;
+import java.util.Scanner;
+
 /**
  *
  * @author eyden
  */
-public class PwdCommand {
-    
+public class PwdCommand implements Command {
+    @Override
+    public String getName() {
+        return "pwd";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Muestra la ruta absoluta actual.";
+    }
+
+    @Override
+    public void execute(String[] args, TerminalSession session, Scanner scanner) {
+        if (args.length > 0) {
+            System.out.println("Uso: pwd");
+            return;
+        }
+
+        System.out.println(session.getCurrentPath());
+    }
 }

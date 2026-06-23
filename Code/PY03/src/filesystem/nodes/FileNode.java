@@ -5,9 +5,18 @@
 package filesystem.nodes;
 
 /**
- *
+ * Nodo de archivo reservado para las siguientes etapas del proyecto.
+ * Por ahora se define para que el arbol pueda crecer sin cambiar la jerarquia.
+ * 
  * @author eyden
  */
-public class FileNode {
-    
+public class FileNode extends FSNode {
+    public FileNode(String name, String owner, String group) {
+        super(name, owner, group);
+    }
+
+    @Override
+    public boolean isDirectory() {
+        return false;
+    }
 }

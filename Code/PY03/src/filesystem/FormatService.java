@@ -1,8 +1,8 @@
 package filesystem;
 
 import constants.SystemConstants;
+import filesystem.nodes.DirectoryTree;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import security.GroupService;
 import security.UserService;
 
@@ -47,10 +47,11 @@ public class FormatService {
         writeBitmap(disk, bitmap);
         writeInitialGroups(disk);
         writeInitialUsers(disk, rootPasswordHash);
-        writeInitialDirectories(disk);
+        DirectoryTree directoryTree = DirectoryTree.createInitialTree();
+        new DirectoryTableStore().save(disk, directoryTree);
 
         BlockManager blockManager = new BlockManager(bitmap);
-        return new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash);
+        return new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash, directoryTree);
     }
 
     private void reserveInternalBlocks(Bitmap bitmap) {
@@ -100,18 +101,8 @@ public class FormatService {
         writeTextBlock(disk, SystemConstants.USER_TABLE_START_BLOCK, data);
     }
 
-    private void writeInitialDirectories(VirtualDisk disk) throws IOException {
-        String data = ""
-                + "path=/,owner=" + SystemConstants.ROOT_USERNAME + ",group=" + SystemConstants.ROOT_GROUP + "\n"
-                + "path=/user,owner=" + SystemConstants.ROOT_USERNAME + ",group=" + SystemConstants.ROOT_GROUP + "\n"
-                + "path=" + SystemConstants.ROOT_HOME_PATH + ",owner=" + SystemConstants.ROOT_USERNAME
-                + ",group=" + SystemConstants.ROOT_GROUP + "\n";
-
-        writeTextBlock(disk, SystemConstants.ROOT_DIRECTORY_START_BLOCK, data);
-    }
-
     private void writeTextBlock(VirtualDisk disk, int blockNumber, String text) throws IOException {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
+        byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         if (data.length > disk.getBlockSize()) {
             throw new IOException("la estructura inicial excede el tamano del bloque " + blockNumber + ".");
         }
