@@ -4,10 +4,17 @@
  */
 package commands;
 
+import app.TerminalSession;
+import java.util.Scanner;
+
 /**
  *
  * @author eyden
  */
-public class Command {
-    
+public interface Command {
+    String getName();
+
+    String getDescription();
+
+    void execute(String[] args, TerminalSession session, Scanner scanner);
 }

@@ -4,8 +4,7 @@
  */
 package filesystem;
 
-
-
+import constants.SystemConstants;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -15,21 +14,45 @@ import java.io.RandomAccessFile;
  * @author Brasly
  */
 public class VirtualDisk {
-    private static final String Disk_name = "miDiscoDuro.fs";
-    private static final int BLOCK_SIZE = 512;
-    
+    private final String diskName;
     private long diskSize;
     private int totalBlocks;
+
     /**
      * Constructor
      * 
      */
-    public VirtualDisk (int sizeMB)throws IOException {
-        this.diskSize = (long) sizeMB * 1024 * 1024;
-        this.totalBlocks = (int) (diskSize / BLOCK_SIZE); 
-        RandomAccessFile disk = new RandomAccessFile(Disk_name, "rw");
+    public VirtualDisk() throws IOException {
+        this(SystemConstants.VIRTUAL_DISK_FILE_NAME, SystemConstants.VIRTUAL_DISK_DEFAULT_SIZE_MB);
+    }
+
+    public VirtualDisk(int sizeMB) throws IOException {
+        this(SystemConstants.VIRTUAL_DISK_FILE_NAME, sizeMB);
+    }
+
+    public VirtualDisk(String diskName, int sizeMB) throws IOException {
+        this.diskName = diskName;
+        this.diskSize = (long) sizeMB * SystemConstants.BYTES_PER_MEGABYTE;
+        this.totalBlocks = (int) (diskSize / SystemConstants.VIRTUAL_DISK_BLOCK_SIZE);
+        RandomAccessFile disk = new RandomAccessFile(this.diskName, "rw");
+        disk.setLength(0);
         disk.setLength(diskSize);
         disk.close();
+    }
+
+    private VirtualDisk(String diskName, long diskSizeBytes) {
+        this.diskName = diskName;
+        this.diskSize = diskSizeBytes;
+        this.totalBlocks = (int) (diskSize / SystemConstants.VIRTUAL_DISK_BLOCK_SIZE);
+    }
+
+    public static VirtualDisk openExisting(String diskName) throws IOException {
+        File diskFile = new File(diskName);
+        if (!diskFile.exists()) {
+            throw new IOException("el disco virtual no existe: " + diskName);
+        }
+
+        return new VirtualDisk(diskName, diskFile.length());
     }
     /**
      * Write a byte to an exact position on the disk
@@ -38,7 +61,7 @@ public class VirtualDisk {
      * @throws IOException 
      */
     public void writeByte(long position, byte value)throws IOException {
-        RandomAccessFile disk = new RandomAccessFile(Disk_name, "rw");
+        RandomAccessFile disk = new RandomAccessFile(diskName, "rw");
         disk.seek(position);
         disk.writeByte(value);
 
@@ -51,7 +74,7 @@ public class VirtualDisk {
      * @throws IOException 
      */
     public byte readByte(long position)throws IOException {
-        RandomAccessFile disk = new RandomAccessFile(Disk_name, "r");
+        RandomAccessFile disk = new RandomAccessFile(diskName, "r");
         disk.seek(position);
         byte value = disk.readByte();
         disk.close();
@@ -85,12 +108,18 @@ public class VirtualDisk {
      * @throws IOException 
      */
     public void writeBlock(int blockNumber, byte[] data) throws IOException {
-        RandomAccessFile disk = new RandomAccessFile(Disk_name, "rw");
+        if (data.length > SystemConstants.VIRTUAL_DISK_BLOCK_SIZE) {
+            throw new IOException("los datos exceden el tamano de un bloque.");
+        }
 
-        long position = blockNumber * BLOCK_SIZE;
+        RandomAccessFile disk = new RandomAccessFile(diskName, "rw");
+
+        long position = (long) blockNumber * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE;
+        byte[] block = new byte[SystemConstants.VIRTUAL_DISK_BLOCK_SIZE];
+        System.arraycopy(data, 0, block, 0, data.length);
 
         disk.seek(position);
-        disk.write(data);
+        disk.write(block);
 
         disk.close();
     }
@@ -101,10 +130,10 @@ public class VirtualDisk {
      * @throws IOException 
      */
     public byte[] readBlock(int blockNumber) throws IOException {
-        RandomAccessFile disk = new RandomAccessFile(Disk_name, "r");
+        RandomAccessFile disk = new RandomAccessFile(diskName, "r");
 
-        byte[] data = new byte[BLOCK_SIZE];
-        long position = blockNumber * BLOCK_SIZE;
+        byte[] data = new byte[SystemConstants.VIRTUAL_DISK_BLOCK_SIZE];
+        long position = (long) blockNumber * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE;
 
         disk.seek(position);
         disk.read(data);
@@ -114,7 +143,7 @@ public class VirtualDisk {
         return data;
     }
      public int getBlockSize() {
-        return BLOCK_SIZE;
+        return SystemConstants.VIRTUAL_DISK_BLOCK_SIZE;
     }
 
     public int getTotalBlocks() {
@@ -122,7 +151,7 @@ public class VirtualDisk {
     }
 
     public String getDiskName() {
-        return Disk_name;
+        return diskName;
     }
     public long getDiskSize() {
         return diskSize;

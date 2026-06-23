@@ -5,9 +5,26 @@
 package filesystem;
 
 /**
- *
+ * Estrategias de asignacion soportadas por el sistema de archivos simulado.
+ * En esta etapa se inicializa INDEXED por defecto, pero el enum deja listo el
+ * punto de extension para las demas estrategias del proyecto.
+ * 
  * @author eyden
  */
-public class AllocationStrategy {
-    
+public enum AllocationStrategy {
+    INDEXED,
+    CONTIGUOUS,
+    LINKED;
+
+    public static AllocationStrategy fromText(String value) {
+        if (value == null || value.isBlank()) {
+            return INDEXED;
+        }
+
+        try {
+            return AllocationStrategy.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            return INDEXED;
+        }
+    }
 }
