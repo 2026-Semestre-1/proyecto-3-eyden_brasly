@@ -22,20 +22,20 @@ public class BlockManager {
     public int allocateBlock() {
         int blockNumber = bitmap.findFirstFree();
         if (blockNumber == -1) {
-            throw new IllegalStateException("no hay bloques libres disponibles.");
+            throw new IllegalStateException("No hay bloques libres disponibles.");
         }
 
         bitmap.markUsed(blockNumber);
         return blockNumber;
     }
 
-    public void freeBlock(int blockNumber) {
-        bitmap.markFree(blockNumber);
-    }
-
     public List<Integer> allocateBlocks(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("la cantidad de bloques debe ser mayor a cero.");
+            throw new IllegalArgumentException("La cantidad de bloques debe ser mayor a cero.");
+        }
+
+        if (bitmap.countFreeBlocks() < amount) {
+            throw new IllegalStateException("No hay suficientes bloques libres.");
         }
 
         List<Integer> allocatedBlocks = new ArrayList<>();
@@ -44,6 +44,20 @@ public class BlockManager {
         }
 
         return allocatedBlocks;
+    }
+
+    public void freeBlock(int blockNumber) {
+        bitmap.markFree(blockNumber);
+    }
+
+    public void freeBlocks(List<Integer> blocks) {
+        if (blocks == null) {
+            return;
+        }
+
+        for (int blockNumber : blocks) {
+            freeBlock(blockNumber);
+        }
     }
 
     public int getFreeBlocks() {

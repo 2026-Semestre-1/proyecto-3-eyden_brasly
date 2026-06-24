@@ -1,19 +1,17 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package commands;
 
 import app.TerminalSession;
 import filesystem.nodes.DirectoryNode;
 import filesystem.nodes.DirectoryTree;
+import filesystem.nodes.FileNode;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que permite mostrar el contenido de un directorio 
  * @author eyden
  */
 public class LsCommand implements Command {
+
     @Override
     public String getName() {
         return "ls";
@@ -57,13 +55,20 @@ public class LsCommand implements Command {
     }
 
     private void listDirectory(DirectoryNode directory) {
-        if (directory.getDirectories().isEmpty()) {
+        boolean emptyDirectories = directory.getDirectories().isEmpty();
+        boolean emptyFiles = directory.getFiles().isEmpty();
+
+        if (emptyDirectories && emptyFiles) {
             System.out.println("(vacio)");
             return;
         }
 
         for (DirectoryNode child : directory.getDirectories()) {
             System.out.println("[DIR] " + child.getName());
+        }
+
+        for (FileNode file : directory.getFiles()) {
+            System.out.println("[FILE] " + file.getName());
         }
     }
 

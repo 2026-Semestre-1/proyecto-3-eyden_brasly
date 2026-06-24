@@ -37,14 +37,29 @@ public class DirectoryTree {
                 continue;
             }
 
-            DirectoryRecord record = DirectoryRecord.fromLine(line);
-            if (record == null || "/".equals(record.path)) {
-                continue;
-            }
+            if (line.contains("type=FILE")) {
+                FileRecord fileRecord = FileRecord.fromLine(line);
 
-            String parentPath = parentPath(record.path);
-            String name = fileName(record.path);
-            tree.createDirectory(parentPath, name, record.owner, record.group);
+                if (fileRecord == null || fileRecord.path == null || fileRecord.path.isBlank()) {
+                    continue;
+                }
+
+                String parentPath = parentPath(fileRecord.path);
+                String name = fileName(fileRecord.path);
+
+                tree.createFileFromRecord(parentPath, name, fileRecord);
+            } else {
+                DirectoryRecord record = DirectoryRecord.fromLine(line);
+
+                if (record == null || "/".equals(record.path)) {
+                    continue;
+                }
+
+                String parentPath = parentPath(record.path);
+                String name = fileName(record.path);
+
+                tree.createDirectory(parentPath, name, record.owner, record.group);
+            }
         }
 
         return tree;
@@ -124,7 +139,8 @@ public class DirectoryTree {
     }
 
     private void appendDirectory(StringBuilder builder, DirectoryNode directory) {
-        builder.append("path=")
+        builder.append("type=DIR")
+                .append("|path=")
                 .append(directory.getPath())
                 .append("|owner=")
                 .append(directory.getOwner())
@@ -132,9 +148,35 @@ public class DirectoryTree {
                 .append(directory.getGroup())
                 .append("\n");
 
+        for (FileNode file : directory.getFiles()) {
+            appendFile(builder, file);
+        }
+
         for (DirectoryNode child : directory.getDirectories()) {
             appendDirectory(builder, child);
         }
+    }
+    private void appendFile(StringBuilder builder, FileNode file) {
+        FCB fcb = file.getFCB();
+
+        builder.append("type=FILE")
+                .append("|path=")
+                .append(fcb.getFullPath())
+                .append("|owner=")
+                .append(fcb.getOwner())
+                .append("|group=")
+                .append(fcb.getGroup())
+                .append("|permissions=")
+                .append(fcb.getPermissions())
+                .append("|creationDate=")
+                .append(fcb.getCreationDate())
+                .append("|size=")
+                .append(fcb.getSize())
+                .append("|open=")
+                .append(fcb.isOpen())
+                .append("|blocks=")
+                .append(blocksToText(fcb.getBlocks()))
+                .append("\n");
     }
 
     private void validateName(String name) {
@@ -166,6 +208,140 @@ public class DirectoryTree {
     private static String fileName(String path) {
         int separator = path.lastIndexOf('/');
         return separator == -1 ? path : path.substring(separator + 1);
+    }
+    public FileNode createFile(String currentPath, String requestedPath, String owner, String group, int permissions) {
+        String fullPath = normalizePath(currentPath, requestedPath);
+
+        String parentPath = parentPath(fullPath);
+        String name = fileName(fullPath);
+
+        validateName(name);
+
+        DirectoryNode parent = find(parentPath)
+                .orElseThrow(() -> new IllegalArgumentException("el directorio padre no existe: " + parentPath));
+
+        if (parent.hasChild(name)) {
+            throw new IllegalArgumentException("ya existe un archivo o directorio con ese nombre: " + name);
+        }
+
+        FileNode file = new FileNode(name, owner, group, permissions, fullPath);
+        parent.addFile(file);
+
+        return file;
+    }
+    public List<String> findFilesByName(String fileName, String startPath) {
+        validateName(fileName);
+
+        DirectoryNode start = find(startPath)
+                .orElseThrow(() -> new IllegalArgumentException("el directorio de inicio no existe: " + startPath));
+        List<String> results = new ArrayList<>();
+        searchFiles(start, fileName, results);
+
+        return results;
+    }
+
+    private void searchFiles(DirectoryNode directory, String fileName, List<String> results) {
+        FileNode file = directory.getFile(fileName);
+
+        if (file != null) {
+            results.add(file.getFullPath());
+        }
+
+        for (DirectoryNode child : directory.getDirectories()) {
+            searchFiles(child, fileName, results);
+        }
+    }
+    public Optional<FileNode> findFile(String currentPath, String requestedPath) {
+        String fullPath = normalizePath(currentPath, requestedPath);
+        String parentPath = parentPath(fullPath);
+        String fileName = fileName(fullPath);
+        Optional<DirectoryNode> parent = find(parentPath);
+        if (parent.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(parent.get().getFile(fileName));
+    }
+    private void createFileFromRecord(String parentPath, String name, FileRecord record) {
+        validateName(name);
+
+        DirectoryNode parent = find(parentPath)
+                .orElseThrow(() -> new IllegalArgumentException("el directorio padre no existe: " + parentPath));
+
+        if (parent.hasChild(name)) {
+            throw new IllegalArgumentException("ya existe un archivo o directorio con ese nombre: " + name);
+        }
+
+        FCB fcb = new FCB(
+                name,
+                record.owner,
+                record.group,
+                record.permissions,
+                record.path,
+                record.creationDate,
+                record.size,
+                record.open,
+                record.blocks
+        );
+
+        FileNode file = new FileNode(fcb);
+        parent.addFile(file);
+    }
+
+    private String blocksToText(List<Integer> blocks) {
+        if (blocks == null || blocks.isEmpty()) {
+            return "";
+        }
+
+        List<String> values = new ArrayList<>();
+
+        for (Integer block : blocks) {
+            values.add(String.valueOf(block));
+        }
+
+        return String.join(",", values);
+    }
+
+    private static int parseInt(String value, int defaultValue) {
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception exception) {
+            return defaultValue;
+        }
+    }
+
+    private static long parseLong(String value, long defaultValue) {
+        try {
+            return Long.parseLong(value);
+        } catch (Exception exception) {
+            return defaultValue;
+        }
+    }
+
+    private static boolean parseBoolean(String value, boolean defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+
+        return Boolean.parseBoolean(value);
+    }
+
+    private static ArrayList<Integer> parseBlocks(String value) {
+        ArrayList<Integer> blocks = new ArrayList<>();
+
+        if (value == null || value.isBlank()) {
+            return blocks;
+        }
+
+        for (String part : value.split(",")) {
+            if (!part.isBlank()) {
+                blocks.add(parseInt(part, -1));
+            }
+        }
+
+        blocks.removeIf(block -> block < 0);
+
+        return blocks;
     }
 
     private static class DirectoryRecord {
@@ -228,6 +404,58 @@ public class DirectoryTree {
                     path,
                     values.getOrDefault("owner", SystemConstants.ROOT_USERNAME),
                     values.getOrDefault("group", SystemConstants.ROOT_GROUP)
+            );
+        }
+    }
+    private static class FileRecord {
+
+        private final String path;
+        private final String owner;
+        private final String group;
+        private final int permissions;
+        private final long creationDate;
+        private final int size;
+        private final boolean open;
+        private final ArrayList<Integer> blocks;
+
+        private FileRecord(String path, String owner, String group, int permissions,
+                long creationDate, int size, boolean open, ArrayList<Integer> blocks) {
+            this.path = path;
+            this.owner = owner;
+            this.group = group;
+            this.permissions = permissions;
+            this.creationDate = creationDate;
+            this.size = size;
+            this.open = open;
+            this.blocks = blocks;
+        }
+
+        private static FileRecord fromLine(String line) {
+            Map<String, String> values = new java.util.LinkedHashMap<>();
+
+            for (String part : line.split("\\|")) {
+                String[] pair = part.split("=", 2);
+
+                if (pair.length == 2) {
+                    values.put(pair[0], pair[1]);
+                }
+            }
+
+            String path = values.get("path");
+
+            if (path == null || path.isBlank()) {
+                return null;
+            }
+
+            return new FileRecord(
+                    path,
+                    values.getOrDefault("owner", SystemConstants.ROOT_USERNAME),
+                    values.getOrDefault("group", SystemConstants.ROOT_GROUP),
+                    parseInt(values.get("permissions"), 77),
+                    parseLong(values.get("creationDate"), System.currentTimeMillis()),
+                    parseInt(values.get("size"), 0),
+                    parseBoolean(values.get("open"), false),
+                    parseBlocks(values.get("blocks"))
             );
         }
     }
