@@ -5,8 +5,8 @@
 package commands;
 
 import app.TerminalSession;
+import constants.SystemConstants;
 import filesystem.nodes.DirectoryTree;
-import filesystem.nodes.FileNode;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -16,9 +16,6 @@ import java.util.Scanner;
  * @author brasly
  */
 public class TouchCommand implements Command {
-
-    private static final int permissions = 77;
-
     @Override
     public String getName() {
         return "touch";
@@ -32,6 +29,7 @@ public class TouchCommand implements Command {
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length == 0) {
+            System.out.println("Uso: touch <archivo> [archivo...]");
             return;
         }
 
@@ -40,17 +38,19 @@ public class TouchCommand implements Command {
 
         for (String argument : args) {
             try {
-                FileNode file = directoryTree.createFile(
+                directoryTree.createFile(
                         session.getCurrentPath(),
                         argument,
                         session.getActiveUser().getUsername(),
                         session.getActiveUser().getPrimaryGroup(),
-                        permissions
+                        SystemConstants.DEFAULT_FILE_PERMISSIONS
                 );
 
                 createdAny = true;
-
+                String fullPath = directoryTree.normalizePath(session.getCurrentPath(), argument);
+                System.out.println("Archivo creado: " + fullPath);
             } catch (IllegalArgumentException exception) {
+                System.out.println("touch: " + exception.getMessage());
             }
         }
 
@@ -58,6 +58,8 @@ public class TouchCommand implements Command {
             try {
                 session.getFileSystem().saveDirectories();
             } catch (IOException exception) {
+                System.out.println("touch: no se pudo guardar la tabla de directorios: "
+                        + exception.getMessage());
             }
         }
     }

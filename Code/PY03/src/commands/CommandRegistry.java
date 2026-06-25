@@ -44,6 +44,8 @@ public class CommandRegistry {
         register(new MkdirCommand());
         register(new CdCommand());
         register(new LsCommand());
+        register(new TouchCommand());
+        register(new WhereisCommand());
         register(new InfoFSCommand());
         register(new ClearCommand());
         register(new HelpCommand());
