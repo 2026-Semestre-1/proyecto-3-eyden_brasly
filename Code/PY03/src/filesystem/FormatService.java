@@ -61,20 +61,7 @@ public class FormatService {
     }
 
     private void writeBitmap(VirtualDisk disk, Bitmap bitmap) throws IOException {
-        int bitmapBytes = SystemConstants.BITMAP_BLOCK_COUNT * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE;
-        byte[] data = bitmap.toBytes(bitmapBytes);
-
-        for (int index = 0; index < SystemConstants.BITMAP_BLOCK_COUNT; index++) {
-            byte[] block = new byte[SystemConstants.VIRTUAL_DISK_BLOCK_SIZE];
-            System.arraycopy(
-                    data,
-                    index * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE,
-                    block,
-                    0,
-                    block.length
-            );
-            disk.writeBlock(SystemConstants.BITMAP_START_BLOCK + index, block);
-        }
+        new BitmapStore().save(disk, bitmap);
     }
 
     private void writeInitialGroups(VirtualDisk disk) throws IOException {

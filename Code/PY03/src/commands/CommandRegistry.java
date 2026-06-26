@@ -46,6 +46,11 @@ public class CommandRegistry {
         register(new LsCommand());
         register(new TouchCommand());
         register(new WhereisCommand());
+        register(new CatCommand());
+        register(new LessCommand());
+        register(new NoteCommand());
+        register(new ViewFCBCommand());
+        register(new ViewFilesOpenCommand());
         register(new InfoFSCommand());
         register(new ClearCommand());
         register(new HelpCommand());

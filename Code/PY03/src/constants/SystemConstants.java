@@ -14,6 +14,8 @@ public final class SystemConstants {
     public static final String USERNAME_REGEX = "[a-z_][a-z0-9_-]{0,31}";
     public static final String GROUP_NAME_REGEX = "[a-z_][a-z0-9_-]{0,31}";
     public static final int DEFAULT_FILE_PERMISSIONS = 77;
+    public static final int LESS_PAGE_SIZE = 20;
+    public static final String NOTE_EXIT_COMMAND = "CTRL+X";
 
     public static final String VIRTUAL_DISK_FILE_NAME = "miDiscoDuro.fs";
     public static final int VIRTUAL_DISK_DEFAULT_SIZE_MB = 10;
