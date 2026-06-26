@@ -5,6 +5,7 @@
 package filesystem;
 
 import filesystem.nodes.DirectoryTree;
+import filesystem.nodes.FileNode;
 import java.io.IOException;
 
 /**
@@ -23,6 +24,8 @@ public class FileSystem {
     private final String rootPasswordHash;
     private final DirectoryTree directoryTree;
     private final DirectoryTableStore directoryTableStore;
+    private final BitmapStore bitmapStore;
+    private final OpenFileTable openFileTable;
 
     public FileSystem(
             VirtualDisk disk,
@@ -41,6 +44,8 @@ public class FileSystem {
         this.rootPasswordHash = rootPasswordHash;
         this.directoryTree = directoryTree;
         this.directoryTableStore = new DirectoryTableStore();
+        this.bitmapStore = new BitmapStore();
+        this.openFileTable = new OpenFileTable();
     }
 
     public VirtualDisk getDisk() {
@@ -63,6 +68,14 @@ public class FileSystem {
         return blockManager;
     }
 
+    public OpenFileTable getOpenFileTable() {
+        return openFileTable;
+    }
+
+    public FileContentService getFileContentService() {
+        return new FileContentService(this);
+    }
+
     public String getRootPasswordHash() {
         return rootPasswordHash;
     }
@@ -73,5 +86,34 @@ public class FileSystem {
 
     public void saveDirectories() throws IOException {
         directoryTableStore.save(disk, directoryTree);
+    }
+
+    public void saveBitmap() throws IOException {
+        bitmapStore.save(disk, bitmap);
+    }
+
+    public boolean openFile(FileNode file, String username, String mode) throws IOException {
+        String path = file.getFullPath();
+        if (!openFileTable.openFile(path, username, mode)) {
+            return false;
+        }
+
+        file.setOpen(true);
+
+        try {
+            saveDirectories();
+            return true;
+        } catch (IOException exception) {
+            openFileTable.closeFile(path);
+            file.setOpen(false);
+            throw exception;
+        }
+    }
+
+    public void closeFile(FileNode file) throws IOException {
+        String path = file.getFullPath();
+        openFileTable.closeFile(path);
+        file.setOpen(false);
+        saveDirectories();
     }
 }

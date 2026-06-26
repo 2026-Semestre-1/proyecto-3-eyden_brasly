@@ -5,14 +5,15 @@
 package filesystem;
 
 /**
- * Clase que ayuda a representar archivos abiertos
+ * Entrada de la tabla de archivos abiertos.
+ *
  * @author braslyvm
  */
 public class OpenFile {
-    private String path;
-    private String username;
-    private String mode;
-    private long openedAt;
+    private final String path;
+    private final String username;
+    private final String mode;
+    private final long openedAt;
 
     public OpenFile(String path, String username, String mode) {
         this.path = path;
@@ -20,5 +21,20 @@ public class OpenFile {
         this.mode = mode;
         this.openedAt = System.currentTimeMillis();
     }
-    
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public long getOpenedAt() {
+        return openedAt;
+    }
 }

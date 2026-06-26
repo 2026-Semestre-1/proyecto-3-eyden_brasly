@@ -1,6 +1,7 @@
 package filesystem.nodes;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Son los datos tecnicos del archivo.
@@ -93,5 +94,12 @@ public class FCB {
 
     public void clearBlocks() {
         blocks.clear();
+    }
+
+    public void replaceBlocks(List<Integer> newBlocks) {
+        blocks.clear();
+        if (newBlocks != null) {
+            blocks.addAll(newBlocks);
+        }
     }
 }

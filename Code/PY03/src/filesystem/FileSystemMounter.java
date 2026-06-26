@@ -73,21 +73,7 @@ public class FileSystemMounter {
     }
 
     public Bitmap loadBitmap(VirtualDisk disk) throws IOException {
-        int size = SystemConstants.BITMAP_BLOCK_COUNT * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE;
-        byte[] data = new byte[size];
-
-        for (int index = 0; index < SystemConstants.BITMAP_BLOCK_COUNT; index++) {
-            byte[] block = disk.readBlock(SystemConstants.BITMAP_START_BLOCK + index);
-            System.arraycopy(
-                    block,
-                    0,
-                    data,
-                    index * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE,
-                    block.length
-            );
-        }
-
-        return Bitmap.fromBytes(data);
+        return new BitmapStore().load(disk);
     }
 
     private String readRootPasswordHash(VirtualDisk disk) throws IOException {
