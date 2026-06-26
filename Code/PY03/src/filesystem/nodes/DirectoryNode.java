@@ -21,11 +21,13 @@ public class DirectoryNode extends FSNode {
     private DirectoryNode parent;
     private final Map<String, DirectoryNode> directories;
     private final Map<String, FileNode> files;
+    private final Map<String, String> links;
 
     public DirectoryNode(String name, String owner, String group) {
         super(name, owner, group);
         this.directories = new TreeMap<>();
         this.files = new TreeMap<>();
+        this.links = new TreeMap<>();
     }
 
     @Override
@@ -52,7 +54,7 @@ public class DirectoryNode extends FSNode {
      public void addDirectory(DirectoryNode directory) {
         String name = directory.getName();
 
-        if (hasDirectory(name) || hasFile(name)) {
+        if (hasChild(name)) {
             throw new IllegalArgumentException("Ya existe un archivo o directorio con ese nombre: " + name);
         }
 
@@ -75,7 +77,7 @@ public class DirectoryNode extends FSNode {
     public void addFile(FileNode file) {
         String name = file.getName();
 
-        if (hasDirectory(name) || hasFile(name)) {
+        if (hasChild(name)) {
             throw new IllegalArgumentException("Ya existe un archivo o directorio con ese nombre: " + name);
         }
 
@@ -87,7 +89,10 @@ public class DirectoryNode extends FSNode {
     }
 
     public boolean hasChild(String name) {
-        return hasDirectory(name) || hasFile(name);
+        return hasDirectory(name) || hasFile(name) || hasLink(name);
+    }
+    public boolean isEmpty() {
+        return directories.isEmpty() && files.isEmpty() && links.isEmpty();
     }
 
     public List<FSNode> getChildren() {
@@ -97,6 +102,42 @@ public class DirectoryNode extends FSNode {
         children.addAll(files.values());
 
         return children;
+    }
+    public DirectoryNode removeDirectory(String name) {
+        return directories.remove(name);
+    }
+
+    public FileNode removeFile(String name) {
+        return files.remove(name);
+    }
+    public boolean hasLink(String name) {
+        return links.containsKey(name);
+    }
+
+    public String getLinkTarget(String name) {
+        return links.get(name);
+    }
+
+    public void addLink(String name, String targetPath) {
+        if (hasChild(name)) {
+            throw new IllegalArgumentException("Ya existe un archivo, directorio o enlace con ese nombre: " + name);
+        }
+
+        links.put(name, targetPath);
+    }
+
+    public String removeLink(String name) {
+        return links.remove(name);
+    }
+
+    public void updateLink(String name, String newTargetPath) {
+        if (links.containsKey(name)) {
+            links.put(name, newTargetPath);
+        }
+    }
+
+    public Map<String, String> getLinks() {
+        return Collections.unmodifiableMap(links);
     }
 
 

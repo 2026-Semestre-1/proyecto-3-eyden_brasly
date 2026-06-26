@@ -4,10 +4,52 @@
  */
 package commands;
 
+import app.TerminalSession;
+import filesystem.nodes.DirectoryTree;
+import java.io.IOException;
+import java.util.Scanner;
+
 /**
- *
- * @author eyden
+ * Crea un enlace hacia un archivo existente.
+ * 
+ * @author brasly
  */
-public class LnCommand {
-    
+public class LnCommand implements Command {
+
+    @Override
+    public String getName() {
+        return "ln";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Crea un enlace hacia un archivo existente.";
+    }
+
+    @Override
+    public void execute(String[] args, TerminalSession session, Scanner scanner) {
+        if (args.length != 2) {
+            System.out.println("Uso: ln <archivoOriginal> <nombreEnlace>");
+            return;
+        }
+
+        DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
+
+        try {
+            String linkPath = directoryTree.createLink(
+                    session.getCurrentPath(),
+                    args[0],
+                    args[1]
+            );
+
+            session.getFileSystem().saveDirectories();
+
+            System.out.println("Enlace creado: " + linkPath);
+
+        } catch (IllegalArgumentException exception) {
+            System.out.println("ln: " + exception.getMessage());
+        } catch (IOException exception) {
+            System.out.println("ln: no se pudo guardar la tabla de directorios: " + exception.getMessage());
+        }
+    }
 }
