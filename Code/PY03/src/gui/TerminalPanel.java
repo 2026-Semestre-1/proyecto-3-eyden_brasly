@@ -6,6 +6,9 @@ import commands.CommandRegistry;
 import constants.SystemConstants;
 import filesystem.FileSystem;
 import filesystem.FileSystemMounter;
+import filesystem.nodes.DirectoryNode;
+import filesystem.nodes.DirectoryTree;
+import filesystem.nodes.FileNode;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -16,6 +19,11 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +45,7 @@ import javax.swing.text.StyledDocument;
 
 @SuppressWarnings({"serial", "this-escape"})
 public class TerminalPanel extends JPanel {
+    private static final int MAX_HISTORY_SIZE = 100;
     private static final char CTRL_X = '\u0018';
     private static final String CLEAR_SEQUENCE = "\033[H\033[2J";
     private static final Pattern MOUNTED_PROMPT = Pattern.compile(
@@ -56,6 +65,10 @@ public class TerminalPanel extends JPanel {
     private final TerminalOutputStream outputStream;
     private final PipedOutputStream inputWriter;
     private final Thread shellThread;
+    private final CommandRegistry commandRegistry;
+    private final List<String> commandHistory;
+    private final Deque<String> pendingPasteLines;
+    private final SimpleAttributeSet inputStyle;
     private final SimpleAttributeSet defaultStyle;
     private final SimpleAttributeSet promptUserStyle;
     private final SimpleAttributeSet promptPathStyle;
@@ -70,9 +83,13 @@ public class TerminalPanel extends JPanel {
     private final StringBuilder hiddenInput;
     private TerminalTheme theme;
     private int inputStart;
+    private int historyIndex;
+    private String historyDraft;
     private boolean internalDocumentWrite;
     private boolean passwordInputMode;
     private boolean restylingDocument;
+    private boolean acceptingShellCommand;
+    private String pendingPasteDraft;
 
     public TerminalPanel(
             int id,
@@ -91,6 +108,10 @@ public class TerminalPanel extends JPanel {
         this.terminalPane = new JTextPane();
         this.statusLabel = new JLabel("Terminal " + id);
         this.outputStream = new TerminalOutputStream();
+        this.commandRegistry = new CommandRegistry();
+        this.commandHistory = new ArrayList<>();
+        this.pendingPasteLines = new ArrayDeque<>();
+        this.inputStyle = new SimpleAttributeSet();
         this.defaultStyle = new SimpleAttributeSet();
         this.promptUserStyle = new SimpleAttributeSet();
         this.promptPathStyle = new SimpleAttributeSet();
@@ -104,6 +125,9 @@ public class TerminalPanel extends JPanel {
         this.linkOutputStyle = new SimpleAttributeSet();
         this.hiddenInput = new StringBuilder();
         this.inputStart = 0;
+        this.historyIndex = 0;
+        this.historyDraft = "";
+        this.pendingPasteDraft = null;
 
         try {
             PipedInputStream inputPipe = new PipedInputStream();
@@ -160,6 +184,30 @@ public class TerminalPanel extends JPanel {
             }
         });
 
+        terminalPane.getInputMap().put(KeyStroke.getKeyStroke("UP"), "history-previous");
+        terminalPane.getActionMap().put("history-previous", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                navigateHistory(-1);
+            }
+        });
+
+        terminalPane.getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "history-next");
+        terminalPane.getActionMap().put("history-next", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                navigateHistory(1);
+            }
+        });
+
+        terminalPane.getInputMap().put(KeyStroke.getKeyStroke("TAB"), "complete-input");
+        terminalPane.getActionMap().put("complete-input", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                completeInput();
+            }
+        });
+
         terminalPane.getInputMap().put(KeyStroke.getKeyStroke("control X"), "submit-ctrl-x");
         terminalPane.getActionMap().put("submit-ctrl-x", new AbstractAction() {
             @Override
@@ -183,7 +231,7 @@ public class TerminalPanel extends JPanel {
             initializeSession();
             System.out.println("Escribe \"help\" para ver los comandos disponibles.");
             System.out.println();
-            new Shell(session, new CommandRegistry(), scanner).start();
+            new Shell(session, commandRegistry, scanner).start();
         } catch (RuntimeException exception) {
             System.out.println();
             System.out.println("Error en la terminal grafica: " + exception.getMessage());
@@ -317,6 +365,11 @@ public class TerminalPanel extends JPanel {
 
             boolean hidden = passwordInputMode;
             String line = hidden ? hiddenInput.toString() : document.getText(inputStart, length - inputStart);
+            boolean shellCommand = acceptingShellCommand && !hidden;
+            if (shellCommand) {
+                rememberCommand(line);
+                acceptingShellCommand = false;
+            }
             runOnDocument(() -> {
                 try {
                     if (!hidden && !visibleSuffix.isEmpty()) {
@@ -349,7 +402,66 @@ public class TerminalPanel extends JPanel {
         }
     }
 
+    private void rememberCommand(String command) {
+        String value = command == null ? "" : command.trim();
+        if (value.isEmpty()) {
+            resetHistoryCursor();
+            return;
+        }
+
+        if (commandHistory.isEmpty() || !commandHistory.get(commandHistory.size() - 1).equals(value)) {
+            commandHistory.add(value);
+            if (commandHistory.size() > MAX_HISTORY_SIZE) {
+                commandHistory.remove(0);
+            }
+        }
+        resetHistoryCursor();
+    }
+
+    private void navigateHistory(int direction) {
+        if (passwordInputMode || !acceptingShellCommand || commandHistory.isEmpty()) {
+            return;
+        }
+
+        try {
+            if (historyIndex == commandHistory.size()) {
+                historyDraft = getCurrentInput();
+            }
+
+            int nextIndex = Math.max(0, Math.min(commandHistory.size(), historyIndex + direction));
+            if (nextIndex == historyIndex) {
+                return;
+            }
+
+            historyIndex = nextIndex;
+            String value = historyIndex == commandHistory.size()
+                    ? historyDraft
+                    : commandHistory.get(historyIndex);
+            replaceCurrentInput(value);
+        } catch (BadLocationException exception) {
+            appendShellText("No se pudo leer el historial de comandos.\n");
+        }
+    }
+
+    private void resetHistoryCursor() {
+        historyIndex = commandHistory.size();
+        historyDraft = "";
+    }
+
+    private String getCurrentInput() throws BadLocationException {
+        StyledDocument document = terminalPane.getStyledDocument();
+        int length = document.getLength();
+        if (inputStart > length) {
+            inputStart = length;
+        }
+        return document.getText(inputStart, length - inputStart);
+    }
+
     private void replaceCurrentInput(String value) {
+        replaceCurrentInput(value, value == null ? 0 : value.length());
+    }
+
+    private void replaceCurrentInput(String value, int caretOffset) {
         if (passwordInputMode) {
             hiddenInput.setLength(0);
             hiddenInput.append(value);
@@ -365,12 +477,201 @@ public class TerminalPanel extends JPanel {
                     inputStart = length;
                 }
                 document.remove(inputStart, length - inputStart);
-                document.insertString(inputStart, value, defaultStyle);
+                String safeValue = value == null ? "" : value;
+                document.insertString(inputStart, safeValue, inputStyle);
+                setCaretPositionSafe(inputStart + Math.max(0, Math.min(caretOffset, safeValue.length())));
+            } catch (BadLocationException exception) {
+                throw new IllegalStateException(exception);
+            }
+        });
+    }
+
+    private void completeInput() {
+        if (passwordInputMode || !acceptingShellCommand) {
+            return;
+        }
+
+        try {
+            String input = getCurrentInput();
+            int caretOffset = Math.max(0, Math.min(
+                    terminalPane.getCaretPosition() - inputStart,
+                    input.length()
+            ));
+            Token token = tokenAt(input, caretOffset);
+            List<String> matches = completionMatches(input, token);
+
+            if (matches.isEmpty()) {
+                return;
+            }
+
+            if (matches.size() == 1) {
+                String replacement = matches.get(0);
+                if (token.isCommand() || !replacement.endsWith("/")) {
+                    replacement += " ";
+                }
+                replaceToken(input, token, replacement);
+                return;
+            }
+
+            String commonPrefix = commonPrefix(matches);
+            if (commonPrefix.length() > token.value().length()) {
+                replaceToken(input, token, commonPrefix);
+                return;
+            }
+
+            showCompletionOptions(matches, input);
+        } catch (BadLocationException exception) {
+            appendShellText("No se pudo autocompletar la entrada.\n");
+        }
+    }
+
+    private List<String> completionMatches(String input, Token token) {
+        if (token.isCommand()) {
+            return commandMatches(token.value());
+        }
+
+        return pathMatches(firstCommand(input), token.value());
+    }
+
+    private List<String> commandMatches(String prefix) {
+        List<String> names = new ArrayList<>();
+        if (session.getFileSystem() == null) {
+            Collections.addAll(names, "format", "clear", "help", "exit");
+        } else {
+            commandRegistry.getCommands().forEach(command -> names.add(command.getName()));
+        }
+
+        return names.stream()
+                .filter(name -> name.startsWith(prefix))
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    private List<String> pathMatches(String commandName, String tokenValue) {
+        if (session.getFileSystem() == null || tokenValue.contains("*")) {
+            return List.of();
+        }
+
+        DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
+        int slashIndex = tokenValue.lastIndexOf('/');
+        String rawDirectory = slashIndex >= 0 ? tokenValue.substring(0, slashIndex + 1) : "";
+        String namePrefix = slashIndex >= 0 ? tokenValue.substring(slashIndex + 1) : tokenValue;
+        String requestedDirectory = rawDirectory.isEmpty() ? "." : rawDirectory;
+        String directoryPath = directoryTree.normalizePath(session.getCurrentPath(), requestedDirectory);
+        DirectoryNode directory = directoryTree.find(directoryPath).orElse(null);
+
+        if (directory == null) {
+            return List.of();
+        }
+
+        boolean directoriesOnly = "cd".equals(commandName);
+        List<String> matches = new ArrayList<>();
+        for (DirectoryNode child : directory.getDirectories()) {
+            if (child.getName().startsWith(namePrefix)) {
+                matches.add(rawDirectory + child.getName() + "/");
+            }
+        }
+
+        if (!directoriesOnly) {
+            for (FileNode file : directory.getFiles()) {
+                if (file.getName().startsWith(namePrefix)) {
+                    matches.add(rawDirectory + file.getName());
+                }
+            }
+            for (String linkName : directory.getLinks().keySet()) {
+                if (linkName.startsWith(namePrefix)) {
+                    matches.add(rawDirectory + linkName);
+                }
+            }
+        }
+
+        Collections.sort(matches);
+        return matches;
+    }
+
+    private void replaceToken(String input, Token token, String replacement) {
+        String newInput = input.substring(0, token.start())
+                + replacement
+                + input.substring(token.end());
+        replaceCurrentInput(newInput, token.start() + replacement.length());
+    }
+
+    private void showCompletionOptions(List<String> options, String currentInput) {
+        runOnDocument(() -> {
+            try {
+                StyledDocument document = terminalPane.getStyledDocument();
+                document.insertString(document.getLength(), System.lineSeparator(), defaultStyle);
+                document.insertString(document.getLength(), String.join("  ", options), defaultStyle);
+                document.insertString(document.getLength(), System.lineSeparator(), defaultStyle);
+
+                boolean previousRestyling = restylingDocument;
+                restylingDocument = true;
+                try {
+                    appendStyledShellText(session.getPrompt());
+                } finally {
+                    restylingDocument = previousRestyling;
+                }
+
+                inputStart = document.getLength();
+                acceptingShellCommand = true;
+                resetHistoryCursor();
+                document.insertString(inputStart, currentInput, inputStyle);
                 setCaretPositionSafe(document.getLength());
             } catch (BadLocationException exception) {
                 throw new IllegalStateException(exception);
             }
         });
+    }
+
+    private Token tokenAt(String input, int caretOffset) {
+        int start = caretOffset;
+        while (start > 0 && !Character.isWhitespace(input.charAt(start - 1))) {
+            start--;
+        }
+
+        int end = caretOffset;
+        while (end < input.length() && !Character.isWhitespace(input.charAt(end))) {
+            end++;
+        }
+
+        int firstNonWhitespace = 0;
+        while (firstNonWhitespace < input.length()
+                && Character.isWhitespace(input.charAt(firstNonWhitespace))) {
+            firstNonWhitespace++;
+        }
+
+        return new Token(start, end, input.substring(start, end), start == firstNonWhitespace);
+    }
+
+    private String firstCommand(String input) {
+        String trimmed = input.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        int whitespace = trimmed.indexOf(' ');
+        return whitespace < 0 ? trimmed : trimmed.substring(0, whitespace);
+    }
+
+    private String commonPrefix(List<String> values) {
+        if (values.isEmpty()) {
+            return "";
+        }
+
+        String prefix = values.get(0);
+        for (int index = 1; index < values.size(); index++) {
+            String value = values.get(index);
+            int limit = Math.min(prefix.length(), value.length());
+            int offset = 0;
+            while (offset < limit && prefix.charAt(offset) == value.charAt(offset)) {
+                offset++;
+            }
+            prefix = prefix.substring(0, offset);
+            if (prefix.isEmpty()) {
+                return "";
+            }
+        }
+        return prefix;
     }
 
     private void showTerminalInput() {
@@ -400,6 +701,11 @@ public class TerminalPanel extends JPanel {
             if (passwordInputMode) {
                 hiddenInput.setLength(0);
             }
+            if (!passwordInputMode && isCurrentLineShellPrompt()) {
+                acceptingShellCommand = true;
+                resetHistoryCursor();
+            }
+            processPendingPasteInput();
             statusLabel.setText(getStatusText());
             notifyStateChanged();
         });
@@ -436,7 +742,8 @@ public class TerminalPanel extends JPanel {
                 document.insertString(document.getLength(), mountedPrompt.group(3), promptPathStyle);
                 document.insertString(document.getLength(), mountedPrompt.group(4), promptSymbolStyle);
                 String rest = segment.substring(mountedPrompt.end());
-                document.insertString(document.getLength(), rest, styleForOutput(rest));
+                document.insertString(document.getLength(), rest, inputStyle);
+                markShellPromptReady();
                 return;
             }
 
@@ -446,7 +753,8 @@ public class TerminalPanel extends JPanel {
                 }
                 document.insertString(document.getLength(), initPrompt.group(1), promptUserStyle);
                 String rest = segment.substring(initPrompt.end());
-                document.insertString(document.getLength(), rest, styleForOutput(rest));
+                document.insertString(document.getLength(), rest, inputStyle);
+                markShellPromptReady();
                 return;
             }
 
@@ -473,6 +781,14 @@ public class TerminalPanel extends JPanel {
         return currentLine.equals(promptText);
     }
 
+    private void markShellPromptReady() {
+        if (restylingDocument) {
+            return;
+        }
+        acceptingShellCommand = true;
+        resetHistoryCursor();
+    }
+
     private AttributeSet styleForOutput(String text) {
         String value = text.toLowerCase();
         if (value.contains("escribe \"help\"")) {
@@ -487,7 +803,7 @@ public class TerminalPanel extends JPanel {
         if (value.startsWith("[link] ")) {
             return linkOutputStyle;
         }
-        if (value.contains("error") || value.contains("no se pudo") || value.contains("no existe")
+        if (value.contains("error") || value.contains("no se pudo") || value.contains(": no existe")
                 || value.contains("denegado") || value.contains("invalido")) {
             return errorStyle;
         }
@@ -507,6 +823,7 @@ public class TerminalPanel extends JPanel {
     }
 
     private void configureStyles() {
+        configure(inputStyle, theme.getTerminalForeground(), Font.BOLD);
         configure(defaultStyle, theme.getTerminalForeground(), Font.PLAIN);
         configure(promptUserStyle, theme.getPrompt(), Font.BOLD);
         configure(promptPathStyle, theme.getDirectory(), Font.BOLD);
@@ -567,15 +884,142 @@ public class TerminalPanel extends JPanel {
 
     private boolean isCurrentLinePasswordPrompt() {
         try {
-            StyledDocument document = terminalPane.getStyledDocument();
-            String text = document.getText(0, document.getLength());
-            int lastNewline = text.lastIndexOf('\n');
-            String currentLine = text.substring(lastNewline + 1).toLowerCase().trim();
+            String currentLine = currentDocumentLine().toLowerCase().trim();
             String normalizedLine = currentLine.replace('\u00f1', 'n');
             return normalizedLine.contains("contrasena") && normalizedLine.endsWith(":");
         } catch (BadLocationException exception) {
             return false;
         }
+    }
+
+    private boolean isCurrentLineShellPrompt() {
+        try {
+            String currentLine = currentDocumentLine();
+            return MOUNTED_PROMPT.matcher(currentLine).find()
+                    || INIT_PROMPT.matcher(currentLine).find();
+        } catch (BadLocationException exception) {
+            return false;
+        }
+    }
+
+    private boolean isCurrentLineTextPrompt() {
+        try {
+            String currentLine = currentDocumentLine().trim();
+            return !currentLine.isEmpty() && currentLine.endsWith(":");
+        } catch (BadLocationException exception) {
+            return false;
+        }
+    }
+
+    private String currentDocumentLine() throws BadLocationException {
+        StyledDocument document = terminalPane.getStyledDocument();
+        String text = document.getText(0, document.getLength());
+        int lastNewline = text.lastIndexOf('\n');
+        return text.substring(lastNewline + 1);
+    }
+
+    private void enqueuePastedInput(PastePlan plan) {
+        pendingPasteLines.addAll(plan.linesToSubmit());
+        if (plan.draft() != null) {
+            pendingPasteDraft = plan.draft();
+        }
+        processPendingPasteInput();
+    }
+
+    private void processPendingPasteInput() {
+        if (!isReadyForPastedInput()) {
+            return;
+        }
+
+        if (!pendingPasteLines.isEmpty()) {
+            String nextLine = pendingPasteLines.removeFirst();
+            replaceCurrentInput(nextLine);
+            submitCurrentInput("");
+            return;
+        }
+
+        if (pendingPasteDraft != null) {
+            String draft = pendingPasteDraft;
+            pendingPasteDraft = null;
+            replaceCurrentInput(draft);
+        }
+    }
+
+    private boolean isReadyForPastedInput() {
+        if (!terminalPane.isEditable()) {
+            return false;
+        }
+
+        if (passwordInputMode) {
+            return true;
+        }
+
+        return (acceptingShellCommand && isCurrentLineShellPrompt()) || isCurrentLineTextPrompt();
+    }
+
+    private boolean isMultilineText(String text) {
+        return text != null && (text.contains("\n") || text.contains("\r"));
+    }
+
+    private PastePlan buildPastePlan(String currentInput, int replaceStart, int replaceEnd, String pastedText) {
+        String safeInput = currentInput == null ? "" : currentInput;
+        int safeStart = Math.max(0, Math.min(replaceStart, safeInput.length()));
+        int safeEnd = Math.max(safeStart, Math.min(replaceEnd, safeInput.length()));
+        String normalizedText = pastedText.replace("\r\n", "\n").replace('\r', '\n');
+        String[] parts = normalizedText.split("\n", -1);
+        String prefix = safeInput.substring(0, safeStart);
+        String suffix = safeInput.substring(safeEnd);
+        List<String> lines = new ArrayList<>();
+
+        lines.add(prefix + parts[0]);
+        for (int index = 1; index < parts.length - 1; index++) {
+            lines.add(parts[index]);
+        }
+
+        String draft = null;
+        if (normalizedText.endsWith("\n")) {
+            if (!suffix.isEmpty()) {
+                draft = suffix;
+            }
+        } else {
+            draft = parts[parts.length - 1] + suffix;
+        }
+
+        return new PastePlan(lines, draft);
+    }
+
+    private void handleVisibleMultilinePaste(int offset, int length, String text) throws BadLocationException {
+        StyledDocument document = terminalPane.getStyledDocument();
+        int documentLength = document.getLength();
+        int safeInputStart = Math.max(0, Math.min(inputStart, documentLength));
+        String currentInput = document.getText(safeInputStart, documentLength - safeInputStart);
+        int safeOffset = Math.max(offset, safeInputStart);
+        int safeEnd = Math.max(offset + length, safeInputStart);
+        PastePlan plan = buildPastePlan(
+                currentInput,
+                safeOffset - safeInputStart,
+                safeEnd - safeInputStart,
+                text
+        );
+
+        SwingUtilities.invokeLater(() -> enqueuePastedInput(plan));
+    }
+
+    private void handleHiddenMultilinePaste(String text) {
+        PastePlan plan = buildPastePlan(hiddenInput.toString(), hiddenInput.length(), hiddenInput.length(), text);
+        String firstLine = plan.linesToSubmit().isEmpty() ? "" : plan.linesToSubmit().get(0);
+        List<String> remainingLines = plan.linesToSubmit().size() <= 1
+                ? List.of()
+                : new ArrayList<>(plan.linesToSubmit().subList(1, plan.linesToSubmit().size()));
+
+        hiddenInput.setLength(0);
+        hiddenInput.append(firstLine);
+        SwingUtilities.invokeLater(() -> {
+            if (passwordInputMode) {
+                submitCurrentInput("");
+            }
+            enqueuePastedInput(new PastePlan(remainingLines, plan.draft()));
+        });
     }
 
     private void runOnDocument(Runnable runnable) {
@@ -603,13 +1047,22 @@ public class TerminalPanel extends JPanel {
             }
 
             if (passwordInputMode) {
+                if (isMultilineText(text)) {
+                    handleHiddenMultilinePaste(text);
+                    return;
+                }
                 if (text != null) {
                     hiddenInput.append(text);
                 }
                 return;
             }
 
-            bypass.insertString(Math.max(offset, inputStart), text, attributes);
+            if (isMultilineText(text)) {
+                handleVisibleMultilinePaste(offset, 0, text);
+                return;
+            }
+
+            bypass.insertString(Math.max(offset, inputStart), text, inputStyle);
         }
 
         @Override
@@ -621,6 +1074,10 @@ public class TerminalPanel extends JPanel {
             }
 
             if (passwordInputMode) {
+                if (isMultilineText(text)) {
+                    handleHiddenMultilinePaste(text);
+                    return;
+                }
                 if (length > 0 && hiddenInput.length() > 0) {
                     hiddenInput.deleteCharAt(hiddenInput.length() - 1);
                 }
@@ -634,7 +1091,11 @@ public class TerminalPanel extends JPanel {
             int safeOffset = Math.max(offset, inputStart);
             int safeEnd = Math.max(end, inputStart);
             int safeLength = safeEnd - safeOffset;
-            bypass.replace(safeOffset, safeLength, text, attributes);
+            if (isMultilineText(text)) {
+                handleVisibleMultilinePaste(offset, length, text);
+                return;
+            }
+            bypass.replace(safeOffset, safeLength, text, inputStyle);
         }
 
         @Override
@@ -673,5 +1134,11 @@ public class TerminalPanel extends JPanel {
         public void write(byte[] bytes, int offset, int length) {
             appendShellText(new String(bytes, offset, length, StandardCharsets.UTF_8));
         }
+    }
+
+    private record PastePlan(List<String> linesToSubmit, String draft) {
+    }
+
+    private record Token(int start, int end, String value, boolean isCommand) {
     }
 }
