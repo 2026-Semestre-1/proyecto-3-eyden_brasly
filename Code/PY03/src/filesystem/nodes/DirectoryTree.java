@@ -71,7 +71,7 @@ public class DirectoryTree {
                 String parentPath = parentPath(record.path);
                 String name = fileName(record.path);
 
-                tree.createDirectory(parentPath, name, record.owner, record.group);
+                tree.createDirectory(parentPath, name, record.owner, record.group, record.permissions);
             }
         }
 
@@ -204,6 +204,10 @@ public class DirectoryTree {
     }
 
     public DirectoryNode createDirectory(String parentPath, String name, String owner, String group) {
+        return createDirectory(parentPath, name, owner, group, SystemConstants.DEFAULT_DIRECTORY_PERMISSIONS);
+    }
+
+    public DirectoryNode createDirectory(String parentPath, String name, String owner, String group, int permissions) {
         validateName(name);
 
         DirectoryNode parent = find(parentPath)
@@ -213,7 +217,7 @@ public class DirectoryTree {
             throw new IllegalArgumentException("ya existe un archivo, directorio o enlace con ese nombre: " + name);
         }
 
-        DirectoryNode directory = new DirectoryNode(name, owner, group);
+        DirectoryNode directory = new DirectoryNode(name, owner, group, permissions);
         parent.addDirectory(directory);
 
         return directory;
@@ -455,7 +459,7 @@ public class DirectoryTree {
     }
 
     private DirectoryNode copyDirectoryWithNewPath(DirectoryNode source, String newName, String newPath) {
-        DirectoryNode copy = new DirectoryNode(newName, source.getOwner(), source.getGroup());
+        DirectoryNode copy = new DirectoryNode(newName, source.getOwner(), source.getGroup(), source.getPermissions());
 
         for (FileNode file : source.getFiles()) {
             String filePath = joinPath(newPath, file.getName());
@@ -628,6 +632,8 @@ public class DirectoryTree {
                 .append(directory.getOwner())
                 .append("|group=")
                 .append(directory.getGroup())
+                .append("|permissions=")
+                .append(directory.getPermissions())
                 .append("\n");
 
         for (FileNode file : directory.getFiles()) {
@@ -776,11 +782,13 @@ public class DirectoryTree {
         private final String path;
         private final String owner;
         private final String group;
+        private final int permissions;
 
-        private DirectoryRecord(String path, String owner, String group) {
+        private DirectoryRecord(String path, String owner, String group, int permissions) {
             this.path = path;
             this.owner = owner;
             this.group = group;
+            this.permissions = permissions;
         }
 
         private static DirectoryRecord fromLine(String line) {
@@ -795,6 +803,7 @@ public class DirectoryTree {
             String path = "/";
             String owner = SystemConstants.ROOT_USERNAME;
             String group = SystemConstants.ROOT_GROUP;
+            int permissions = SystemConstants.DEFAULT_DIRECTORY_PERMISSIONS;
 
             for (String part : line.split("\\|")) {
                 String[] pair = part.split("=", 2);
@@ -810,12 +819,14 @@ public class DirectoryTree {
                         owner = pair[1];
                     case "group" ->
                         group = pair[1];
+                    case "permissions" ->
+                        permissions = parseInt(pair[1], SystemConstants.DEFAULT_DIRECTORY_PERMISSIONS);
                     default -> {
                     }
                 }
             }
 
-            return new DirectoryRecord(path, owner, group);
+            return new DirectoryRecord(path, owner, group, permissions);
         }
 
         private static DirectoryRecord fromLegacyLine(String line) {
@@ -838,7 +849,8 @@ public class DirectoryTree {
             return new DirectoryRecord(
                     path,
                     values.getOrDefault("owner", SystemConstants.ROOT_USERNAME),
-                    values.getOrDefault("group", SystemConstants.ROOT_GROUP)
+                    values.getOrDefault("group", SystemConstants.ROOT_GROUP),
+                    parseInt(values.get("permissions"), SystemConstants.DEFAULT_DIRECTORY_PERMISSIONS)
             );
         }
     }

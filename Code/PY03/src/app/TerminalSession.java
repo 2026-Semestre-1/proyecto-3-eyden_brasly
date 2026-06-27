@@ -6,6 +6,7 @@ package app;
 
 import constants.SystemConstants;
 import filesystem.FileSystem;
+import java.io.IOException;
 import security.GroupService;
 import security.UserService;
 import security.UserService.UserAccount;
@@ -35,10 +36,10 @@ public class TerminalSession {
         this.running = true;
     }
 
-    public void mount(FileSystem fileSystem) {
+    public void mount(FileSystem fileSystem) throws IOException {
         this.fileSystem = fileSystem;
-        this.groupService = new GroupService();
-        this.userService = UserService.fromRootPasswordHash(groupService, fileSystem.getRootPasswordHash());
+        this.groupService = fileSystem.loadGroupService();
+        this.userService = fileSystem.loadUserService(groupService);
         this.activeUser = userService.findByUsername(SystemConstants.ROOT_USERNAME).orElseThrow();
         this.currentPath = SystemConstants.ROOT_HOME_PATH;
         this.mode = SystemMode.MOUNTED;

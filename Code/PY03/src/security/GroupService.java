@@ -26,6 +26,16 @@ public class GroupService {
         ensureGroup(SystemConstants.DEFAULT_USER_GROUP, "Grupo general de usuarios");
     }
 
+    public static GroupService fromStoredGroups(Collection<GroupRecord> records) {
+        GroupService service = new GroupService();
+
+        for (GroupRecord record : records) {
+            service.ensureGroup(record.getName(), record.getDescription());
+        }
+
+        return service;
+    }
+
     public boolean addGroup(String name) {
         String normalizedName = normalizeName(name);
         validateGroupName(normalizedName);

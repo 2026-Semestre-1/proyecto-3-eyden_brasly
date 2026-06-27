@@ -38,6 +38,20 @@ public class TouchCommand implements Command {
 
         for (String argument : args) {
             try {
+                String fullPath = directoryTree.normalizePath(session.getCurrentPath(), argument);
+                String parentPath = FileCommandSupport.parentPath(fullPath);
+                var parent = directoryTree.find(parentPath)
+                        .orElseThrow(() -> new IllegalArgumentException("el directorio padre no existe: " + parentPath));
+                if (!PermissionSupport.hasAll(
+                        session,
+                        parent,
+                        PermissionSupport.Access.WRITE,
+                        PermissionSupport.Access.EXECUTE
+                )) {
+                    PermissionSupport.deny(getName(), "crear en", parentPath);
+                    continue;
+                }
+
                 directoryTree.createFile(
                         session.getCurrentPath(),
                         argument,
@@ -47,7 +61,6 @@ public class TouchCommand implements Command {
                 );
 
                 createdAny = true;
-                String fullPath = directoryTree.normalizePath(session.getCurrentPath(), argument);
                 System.out.println("Archivo creado: " + fullPath);
             } catch (IllegalArgumentException exception) {
                 System.out.println("touch: " + exception.getMessage());

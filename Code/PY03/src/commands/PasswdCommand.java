@@ -5,6 +5,7 @@
 package commands;
 
 import app.TerminalSession;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -53,12 +54,15 @@ public class PasswdCommand implements Command {
         try {
             boolean updated = session.getUserService().changePassword(targetUsername, password);
             if (updated) {
+                session.getFileSystem().saveUsers(session.getUserService());
                 System.out.println("Contrasena actualizada correctamente.");
             } else {
                 System.out.println("passwd: no se pudo actualizar la contrasena.");
             }
         } catch (IllegalArgumentException exception) {
             System.out.println("passwd: " + exception.getMessage());
+        } catch (IOException exception) {
+            System.out.println("passwd: contrasena actualizada en sesion, pero no se pudo guardar: " + exception.getMessage());
         }
     }
 }

@@ -7,8 +7,8 @@ package commands;
 import app.TerminalSession;
 import filesystem.OpenFile;
 import filesystem.OpenFileTable;
-import java.time.Instant;
 import java.util.Scanner;
+import util.DateUtil;
 
 /**
  * Consulta la tabla de archivos abiertos de la sesion.
@@ -41,7 +41,7 @@ public class ViewFilesOpenCommand implements Command {
                     file.getPath()
                     + " | usuario=" + file.getUsername()
                     + " | modo=" + file.getMode()
-                    + " | apertura=" + Instant.ofEpochMilli(file.getOpenedAt())
+                    + " | apertura=" + DateUtil.formatMillis(file.getOpenedAt())
             );
         }
     }

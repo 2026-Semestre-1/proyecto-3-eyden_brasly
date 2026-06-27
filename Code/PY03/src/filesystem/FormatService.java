@@ -45,8 +45,10 @@ public class FormatService {
         disk.writeBlock(SystemConstants.MBR_BLOCK, mbr.toBytes());
         disk.writeBlock(SystemConstants.SUPER_BLOCK, superBlock.toBytes());
         writeBitmap(disk, bitmap);
-        writeInitialGroups(disk);
-        writeInitialUsers(disk, rootPasswordHash);
+        GroupService groupService = new GroupService();
+        UserService userService = UserService.fromRootPasswordHash(groupService, rootPasswordHash);
+        new GroupTableStore().save(disk, groupService);
+        new UserTableStore().save(disk, userService);
         DirectoryTree directoryTree = DirectoryTree.createInitialTree();
         new DirectoryTableStore().save(disk, directoryTree);
 
@@ -64,36 +66,4 @@ public class FormatService {
         new BitmapStore().save(disk, bitmap);
     }
 
-    private void writeInitialGroups(VirtualDisk disk) throws IOException {
-        GroupService groupService = new GroupService();
-        StringBuilder data = new StringBuilder();
-
-        groupService.getGroups().forEach(group -> data
-                .append("group=")
-                .append(group.getName())
-                .append(",description=")
-                .append(group.getDescription())
-                .append("\n"));
-
-        writeTextBlock(disk, SystemConstants.GROUP_TABLE_START_BLOCK, data.toString());
-    }
-
-    private void writeInitialUsers(VirtualDisk disk, String rootPasswordHash) throws IOException {
-        String data = ""
-                + "username=" + SystemConstants.ROOT_USERNAME + "\n"
-                + "fullName=" + SystemConstants.ROOT_FULL_NAME + "\n"
-                + "passwordHash=" + rootPasswordHash + "\n"
-                + "primaryGroup=" + SystemConstants.ROOT_GROUP + "\n";
-
-        writeTextBlock(disk, SystemConstants.USER_TABLE_START_BLOCK, data);
-    }
-
-    private void writeTextBlock(VirtualDisk disk, int blockNumber, String text) throws IOException {
-        byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        if (data.length > disk.getBlockSize()) {
-            throw new IOException("la estructura inicial excede el tamano del bloque " + blockNumber + ".");
-        }
-
-        disk.writeBlock(blockNumber, data);
-    }
 }

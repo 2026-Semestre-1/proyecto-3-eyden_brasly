@@ -47,9 +47,18 @@ public class LsCommand implements Command {
             System.out.println("ls: no existe el directorio: " + targetPath);
             return;
         }
+        if (!PermissionSupport.hasAll(
+                session,
+                directory,
+                PermissionSupport.Access.READ,
+                PermissionSupport.Access.EXECUTE
+        )) {
+            PermissionSupport.deny(getName(), "listar", targetPath);
+            return;
+        }
 
         if (recursive) {
-            listRecursive(directory);
+            listRecursive(session, directory);
         } else {
             listDirectory(directory);
         }
@@ -78,13 +87,23 @@ public class LsCommand implements Command {
         }
     }
 
-    private void listRecursive(DirectoryNode directory) {
+    private void listRecursive(TerminalSession session, DirectoryNode directory) {
         System.out.println(directory.getPath() + ":");
         listDirectory(directory);
 
         for (DirectoryNode child : directory.getDirectories()) {
+            if (!PermissionSupport.hasAll(
+                    session,
+                    child,
+                    PermissionSupport.Access.READ,
+                    PermissionSupport.Access.EXECUTE
+            )) {
+                System.out.println();
+                PermissionSupport.deny(getName(), "listar", child.getPath());
+                continue;
+            }
             System.out.println();
-            listRecursive(child);
+            listRecursive(session, child);
         }
     }
 }

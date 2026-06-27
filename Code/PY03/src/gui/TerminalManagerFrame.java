@@ -217,7 +217,6 @@ public class TerminalManagerFrame extends JFrame {
         JMenu menu = new JMenu("Disco");
         menu.add(item("Ver informacion del sistema de archivos", () -> submitCommand("infoFS")));
         menu.add(item("Ver mapa de bloques", () -> showView(DISK_MAP_VIEW)));
-        menu.add(item("Ver fragmentacion", () -> showView(DISK_MAP_VIEW)));
         menu.add(item("Defragmentar disco", this::showDefragPending));
         menu.addSeparator();
         menu.add(item("Ver FCB de archivo", this::runViewFcb));

@@ -39,6 +39,17 @@ public class MkdirCommand implements Command {
                 String targetPath = directoryTree.normalizePath(session.getCurrentPath(), argument);
                 String parentPath = getParentPath(targetPath);
                 String directoryName = getName(targetPath);
+                var parent = directoryTree.find(parentPath)
+                        .orElseThrow(() -> new IllegalArgumentException("el directorio padre no existe: " + parentPath));
+                if (!PermissionSupport.hasAll(
+                        session,
+                        parent,
+                        PermissionSupport.Access.WRITE,
+                        PermissionSupport.Access.EXECUTE
+                )) {
+                    PermissionSupport.deny(getName(), "crear en", parentPath);
+                    continue;
+                }
 
                 directoryTree.createDirectory(
                         parentPath,

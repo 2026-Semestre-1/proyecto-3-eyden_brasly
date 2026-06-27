@@ -34,8 +34,13 @@ public class CdCommand implements Command {
         String requestedPath = args.length == 0 ? "/" : args[0];
         String targetPath = directoryTree.normalizePath(session.getCurrentPath(), requestedPath);
 
-        if (directoryTree.find(targetPath).isEmpty()) {
+        var directory = directoryTree.find(targetPath);
+        if (directory.isEmpty()) {
             System.out.println("cd: no existe el directorio: " + targetPath);
+            return;
+        }
+        if (!PermissionSupport.hasAccess(session, directory.get(), PermissionSupport.Access.EXECUTE)) {
+            PermissionSupport.deny(getName(), "entrar", targetPath);
             return;
         }
 

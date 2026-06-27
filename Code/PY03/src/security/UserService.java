@@ -54,6 +54,38 @@ public class UserService {
         return new UserService(groupService, rootPasswordHash, true);
     }
 
+    public static UserService fromStoredUsers(
+            GroupService groupService,
+            Collection<UserAccount> records,
+            String fallbackRootPasswordHash
+    ) {
+        UserService service = new UserService(groupService, fallbackRootPasswordHash, true);
+
+        if (!records.isEmpty()) {
+            service.users.clear();
+
+            for (UserAccount record : records) {
+                service.addStoredUser(
+                        record.getUsername(),
+                        record.getFullName(),
+                        record.getPasswordHash(),
+                        record.getPrimaryGroup()
+                );
+            }
+
+            if (!service.exists(SystemConstants.ROOT_USERNAME)) {
+                service.addSystemUser(
+                        SystemConstants.ROOT_USERNAME,
+                        SystemConstants.ROOT_FULL_NAME,
+                        fallbackRootPasswordHash,
+                        SystemConstants.ROOT_GROUP
+                );
+            }
+        }
+
+        return service;
+    }
+
     public boolean addUser(String username, String fullName, String password) {
         String normalizedUsername = normalizeUsername(username);
         validateUsername(normalizedUsername);
@@ -116,6 +148,28 @@ public class UserService {
                 fullName,
                 passwordHash,
                 primaryGroup
+        ));
+    }
+
+    private void addStoredUser(String username, String fullName, String passwordHash, String primaryGroup) {
+        String normalizedUsername = normalizeUsername(username);
+        validateUsername(normalizedUsername);
+        validateFullName(fullName);
+
+        if (passwordHash == null || passwordHash.isBlank()) {
+            throw new IllegalArgumentException("hash de contrasena invalido para " + normalizedUsername + ".");
+        }
+
+        String normalizedGroup = primaryGroup == null || primaryGroup.isBlank()
+                ? SystemConstants.DEFAULT_USER_GROUP
+                : primaryGroup.trim().toLowerCase();
+        groupService.ensureGroup(normalizedGroup, "Grupo cargado desde disco");
+
+        users.put(normalizedUsername, new UserAccount(
+                normalizedUsername,
+                fullName.trim(),
+                passwordHash.trim(),
+                normalizedGroup
         ));
     }
 

@@ -3,7 +3,6 @@ package filesystem;
 import constants.SystemConstants;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Lee las estructuras persistidas en el disco virtual y construye el objeto
@@ -77,13 +76,6 @@ public class FileSystemMounter {
     }
 
     private String readRootPasswordHash(VirtualDisk disk) throws IOException {
-        Map<String, String> values = MBR.parseBlock(disk.readBlock(SystemConstants.USER_TABLE_START_BLOCK));
-        String hash = values.get("passwordHash");
-
-        if (hash == null || hash.isBlank()) {
-            throw new IOException("no se encontro la contrasena de root en la tabla de usuarios.");
-        }
-
-        return hash;
+        return new UserTableStore().readRootPasswordHash(disk);
     }
 }

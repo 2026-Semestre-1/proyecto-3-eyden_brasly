@@ -52,6 +52,9 @@ public class CommandRegistry {
         register(new CatCommand());
         register(new LessCommand());
         register(new NoteCommand());
+        register(new ChmodCommand());
+        register(new ChownCommand());
+        register(new ChgrpCommand());
         register(new ViewFCBCommand());
         register(new ViewFilesOpenCommand());
         register(new InfoFSCommand());

@@ -6,6 +6,7 @@ package commands;
 
 import app.TerminalSession;
 import filesystem.nodes.DirectoryTree;
+import filesystem.nodes.FSNode;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -36,6 +37,41 @@ public class MvCommand implements Command {
         DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
 
         try {
+            String sourcePath = directoryTree.normalizePath(session.getCurrentPath(), args[0]);
+            String sourceParentPath = FileCommandSupport.parentPath(sourcePath);
+            FSNode source = FileCommandSupport.findNode(session, args[0], getName());
+            if (source == null) {
+                return;
+            }
+            var sourceParent = directoryTree.find(sourceParentPath)
+                    .orElseThrow(() -> new IllegalArgumentException("la ruta origen no existe: " + sourceParentPath));
+            if (!PermissionSupport.hasAll(
+                    session,
+                    sourceParent,
+                    PermissionSupport.Access.WRITE,
+                    PermissionSupport.Access.EXECUTE
+            ) || !PermissionSupport.hasAccess(session, source, PermissionSupport.Access.WRITE)) {
+                PermissionSupport.deny(getName(), "mover", sourcePath);
+                return;
+            }
+
+            String destinationPath = directoryTree.normalizePath(session.getCurrentPath(), args[1]);
+            var destinationAsDirectory = directoryTree.find(destinationPath);
+            String destinationParentPath = destinationAsDirectory.isPresent()
+                    ? destinationPath
+                    : FileCommandSupport.parentPath(destinationPath);
+            var destinationParent = directoryTree.find(destinationParentPath)
+                    .orElseThrow(() -> new IllegalArgumentException("el directorio destino no existe: " + destinationParentPath));
+            if (!PermissionSupport.hasAll(
+                    session,
+                    destinationParent,
+                    PermissionSupport.Access.WRITE,
+                    PermissionSupport.Access.EXECUTE
+            )) {
+                PermissionSupport.deny(getName(), "mover hacia", destinationParentPath);
+                return;
+            }
+
             directoryTree.moveNode(
                     session.getCurrentPath(),
                     args[0],

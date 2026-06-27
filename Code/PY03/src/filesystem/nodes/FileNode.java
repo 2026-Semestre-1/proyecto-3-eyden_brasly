@@ -27,6 +27,20 @@ public class FileNode extends FSNode {
         return fcb;
     }
 
+    public void setOwner(String owner) {
+        super.setOwner(owner);
+        fcb.setOwner(owner);
+    }
+
+    public void setGroup(String group) {
+        super.setGroup(group);
+        fcb.setGroup(group);
+    }
+
+    public void setPermissions(int permissions) {
+        fcb.setPermissions(permissions);
+    }
+
     public String getFullPath() {
         return fcb.getFullPath();
     }

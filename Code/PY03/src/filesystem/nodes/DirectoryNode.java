@@ -4,6 +4,7 @@
  */
 package filesystem.nodes;
 
+import constants.SystemConstants;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,12 +20,18 @@ import java.util.TreeMap;
  */
 public class DirectoryNode extends FSNode {
     private DirectoryNode parent;
+    private int permissions;
     private final Map<String, DirectoryNode> directories;
     private final Map<String, FileNode> files;
     private final Map<String, String> links;
 
     public DirectoryNode(String name, String owner, String group) {
+        this(name, owner, group, SystemConstants.DEFAULT_DIRECTORY_PERMISSIONS);
+    }
+
+    public DirectoryNode(String name, String owner, String group, int permissions) {
         super(name, owner, group);
+        this.permissions = permissions;
         this.directories = new TreeMap<>();
         this.files = new TreeMap<>();
         this.links = new TreeMap<>();
@@ -37,6 +44,14 @@ public class DirectoryNode extends FSNode {
 
     public DirectoryNode getParent() {
         return parent;
+    }
+
+    public int getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(int permissions) {
+        this.permissions = permissions;
     }
 
     public void setParent(DirectoryNode parent) {

@@ -5,6 +5,7 @@
 package commands;
 
 import app.TerminalSession;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -39,12 +40,15 @@ public class GroupAddCommand implements Command {
         try {
             boolean created = session.getGroupService().addGroup(groupName);
             if (created) {
+                session.getFileSystem().saveGroups(session.getGroupService());
                 System.out.println("Grupo '" + groupName.trim().toLowerCase() + "' creado correctamente.");
             } else {
                 System.out.println("groupadd: el grupo '" + groupName.trim().toLowerCase() + "' ya existe.");
             }
         } catch (IllegalArgumentException exception) {
             System.out.println("groupadd: " + exception.getMessage());
+        } catch (IOException exception) {
+            System.out.println("groupadd: grupo creado en sesion, pero no se pudo guardar: " + exception.getMessage());
         }
     }
 }

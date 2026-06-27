@@ -80,6 +80,18 @@ public class FCB {
         return fullPath;
     }
 
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public void setPermissions(int permissions) {
+        this.permissions = permissions;
+    }
+
     public void setSize(int size) {
         this.size = size;
     }

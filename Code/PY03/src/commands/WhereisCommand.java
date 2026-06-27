@@ -4,6 +4,7 @@
  */
 package commands;
 import app.TerminalSession;
+import filesystem.nodes.DirectoryNode;
 import filesystem.nodes.DirectoryTree;
 import java.util.List;
 import java.util.Scanner;
@@ -37,9 +38,22 @@ public class WhereisCommand implements Command {
         if (args.length == 2) {
             startPath = directoryTree.normalizePath(session.getCurrentPath(), args[1]);
         }
+        final String resolvedStartPath = startPath;
 
         try {
-            List<String> results = directoryTree.findFilesByName(fileName, startPath);
+            DirectoryNode startDirectory = directoryTree.find(resolvedStartPath)
+                    .orElseThrow(() -> new IllegalArgumentException("el directorio de inicio no existe: " + resolvedStartPath));
+            if (!PermissionSupport.hasAll(
+                    session,
+                    startDirectory,
+                    PermissionSupport.Access.READ,
+                    PermissionSupport.Access.EXECUTE
+            )) {
+                PermissionSupport.deny(getName(), "buscar en", resolvedStartPath);
+                return;
+            }
+
+            List<String> results = directoryTree.findFilesByName(fileName, resolvedStartPath);
 
             if (results.isEmpty()) {
                 System.out.println("whereis: no se encontro el archivo: " + fileName);

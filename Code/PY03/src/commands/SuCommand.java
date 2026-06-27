@@ -44,6 +44,18 @@ public class SuCommand implements Command {
         }
 
         session.switchUser(targetUsername);
-        System.out.println("Sesion cambiada a '" + targetUsername.trim().toLowerCase() + "'.");
+        String normalizedUsername = targetUsername.trim().toLowerCase();
+        moveToHomeDirectory(session, normalizedUsername);
+        System.out.println("Sesion cambiada a '" + normalizedUsername + "'.");
+    }
+
+    private void moveToHomeDirectory(TerminalSession session, String username) {
+        String homePath = SystemConstants.ROOT_USERNAME.equals(username)
+                ? SystemConstants.ROOT_HOME_PATH
+                : "/user/" + username;
+
+        if (session.getFileSystem().getDirectoryTree().find(homePath).isPresent()) {
+            session.setCurrentPath(homePath);
+        }
     }
 }

@@ -36,7 +36,19 @@ public class NoteCommand implements Command {
         }
 
         FileNode file = FileCommandSupport.findFile(session, args[0], getName());
-        if (file == null || !FileCommandSupport.openFile(session, file, "ESCRITURA", getName())) {
+        if (file == null) {
+            return;
+        }
+        if (!PermissionSupport.hasAll(
+                session,
+                file,
+                PermissionSupport.Access.READ,
+                PermissionSupport.Access.WRITE
+        )) {
+            PermissionSupport.deny(getName(), "editar", file.getFullPath());
+            return;
+        }
+        if (!FileCommandSupport.openFile(session, file, "ESCRITURA", getName())) {
             return;
         }
 

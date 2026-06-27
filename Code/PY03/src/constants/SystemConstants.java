@@ -14,6 +14,7 @@ public final class SystemConstants {
     public static final String USERNAME_REGEX = "[a-z_][a-z0-9_-]{0,31}";
     public static final String GROUP_NAME_REGEX = "[a-z_][a-z0-9_-]{0,31}";
     public static final int DEFAULT_FILE_PERMISSIONS = 77;
+    public static final int DEFAULT_DIRECTORY_PERMISSIONS = 77;
     public static final int LESS_PAGE_SIZE = 20;
     public static final String NOTE_EXIT_COMMAND = "CTRL+X";
 
@@ -30,7 +31,9 @@ public final class SystemConstants {
     public static final int BITMAP_START_BLOCK = 2;
     public static final int BITMAP_BLOCK_COUNT = 4;
     public static final int USER_TABLE_START_BLOCK = 6;
+    public static final int USER_TABLE_BLOCK_COUNT = 3;
     public static final int GROUP_TABLE_START_BLOCK = 9;
+    public static final int GROUP_TABLE_BLOCK_COUNT = 2;
     public static final int ROOT_DIRECTORY_START_BLOCK = 11;
     public static final int DIRECTORY_TABLE_BLOCK_COUNT = 10;
     public static final int DATA_START_BLOCK = 21;

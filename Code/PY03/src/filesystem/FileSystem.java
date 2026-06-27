@@ -7,6 +7,8 @@ package filesystem;
 import filesystem.nodes.DirectoryTree;
 import filesystem.nodes.FileNode;
 import java.io.IOException;
+import security.GroupService;
+import security.UserService;
 
 /**
  * Representa un File System ya montado sobre el disco virtual.
@@ -25,6 +27,8 @@ public class FileSystem {
     private final DirectoryTree directoryTree;
     private final DirectoryTableStore directoryTableStore;
     private final BitmapStore bitmapStore;
+    private final GroupTableStore groupTableStore;
+    private final UserTableStore userTableStore;
     private final OpenFileTable openFileTable;
 
     public FileSystem(
@@ -45,6 +49,8 @@ public class FileSystem {
         this.directoryTree = directoryTree;
         this.directoryTableStore = new DirectoryTableStore();
         this.bitmapStore = new BitmapStore();
+        this.groupTableStore = new GroupTableStore();
+        this.userTableStore = new UserTableStore();
         this.openFileTable = new OpenFileTable();
     }
 
@@ -90,6 +96,22 @@ public class FileSystem {
 
     public void saveBitmap() throws IOException {
         bitmapStore.save(disk, bitmap);
+    }
+
+    public GroupService loadGroupService() throws IOException {
+        return groupTableStore.load(disk);
+    }
+
+    public UserService loadUserService(GroupService groupService) throws IOException {
+        return userTableStore.load(disk, groupService, rootPasswordHash);
+    }
+
+    public void saveGroups(GroupService groupService) throws IOException {
+        groupTableStore.save(disk, groupService);
+    }
+
+    public void saveUsers(UserService userService) throws IOException {
+        userTableStore.save(disk, userService);
     }
 
     public boolean openFile(FileNode file, String username, String mode) throws IOException {

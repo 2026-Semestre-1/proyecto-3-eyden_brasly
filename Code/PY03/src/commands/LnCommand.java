@@ -6,6 +6,7 @@ package commands;
 
 import app.TerminalSession;
 import filesystem.nodes.DirectoryTree;
+import filesystem.nodes.FileNode;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -36,6 +37,29 @@ public class LnCommand implements Command {
         DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
 
         try {
+            FileNode original = FileCommandSupport.findFile(session, args[0], getName());
+            if (original == null) {
+                return;
+            }
+            if (!PermissionSupport.hasAccess(session, original, PermissionSupport.Access.READ)) {
+                PermissionSupport.deny(getName(), "leer", original.getFullPath());
+                return;
+            }
+
+            String linkFullPath = directoryTree.normalizePath(session.getCurrentPath(), args[1]);
+            String parentPath = FileCommandSupport.parentPath(linkFullPath);
+            var parent = directoryTree.find(parentPath)
+                    .orElseThrow(() -> new IllegalArgumentException("el directorio destino no existe: " + parentPath));
+            if (!PermissionSupport.hasAll(
+                    session,
+                    parent,
+                    PermissionSupport.Access.WRITE,
+                    PermissionSupport.Access.EXECUTE
+            )) {
+                PermissionSupport.deny(getName(), "crear en", parentPath);
+                return;
+            }
+
             String linkPath = directoryTree.createLink(
                     session.getCurrentPath(),
                     args[0],

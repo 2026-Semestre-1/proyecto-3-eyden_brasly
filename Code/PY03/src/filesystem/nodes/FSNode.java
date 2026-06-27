@@ -12,8 +12,8 @@ package filesystem.nodes;
  */
 public abstract class FSNode {
     private final String name;
-    private final String owner;
-    private final String group;
+    private String owner;
+    private String group;
 
     protected FSNode(String name, String owner, String group) {
         this.name = name;
@@ -29,8 +29,16 @@ public abstract class FSNode {
         return owner;
     }
 
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
     public String getGroup() {
         return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     public abstract boolean isDirectory();

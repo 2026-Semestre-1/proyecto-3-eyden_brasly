@@ -7,8 +7,8 @@ package commands;
 import app.TerminalSession;
 import filesystem.nodes.FCB;
 import filesystem.nodes.FileNode;
-import java.time.Instant;
 import java.util.Scanner;
+import util.DateUtil;
 
 /**
  * Muestra los atributos estructurales del FCB de un archivo.
@@ -37,6 +37,10 @@ public class ViewFCBCommand implements Command {
         if (file == null) {
             return;
         }
+        if (!PermissionSupport.hasAccess(session, file, PermissionSupport.Access.READ)) {
+            PermissionSupport.deny(getName(), "ver FCB de", file.getFullPath());
+            return;
+        }
 
         FCB fcb = file.getFCB();
         System.out.println("Nombre: " + fcb.getName());
@@ -44,7 +48,7 @@ public class ViewFCBCommand implements Command {
         System.out.println("Dueno: " + fcb.getOwner());
         System.out.println("Grupo: " + fcb.getGroup());
         System.out.println("Permisos: " + String.format("%02d", fcb.getPermissions()));
-        System.out.println("Fecha de creacion: " + Instant.ofEpochMilli(fcb.getCreationDate()));
+        System.out.println("Fecha de creacion: " + DateUtil.formatMillis(fcb.getCreationDate()));
         System.out.println("Estado: " + (fcb.isOpen() ? "abierto" : "cerrado"));
         System.out.println("Tamano: " + fcb.getSize() + " bytes");
         System.out.println("Bloques: " + fcb.getBlocks());
