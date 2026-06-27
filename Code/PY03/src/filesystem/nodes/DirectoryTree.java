@@ -139,13 +139,13 @@ public class DirectoryTree {
             return Optional.of(file);
         }
 
-        String targetPath = parent.get().getLinkTarget(name);
+        LinkNode link = parent.get().getLink(name);
 
-        if (targetPath == null || targetPath.isBlank()) {
+        if (link == null || link.getTarget() == null || link.getTarget().isBlank()) {
             return Optional.empty();
         }
 
-        return findFile("/", targetPath);
+        return findFile("/", link.getTarget());
     }
 
     public Optional<FSNode> findNode(String currentPath, String requestedPath) {
@@ -167,7 +167,26 @@ public class DirectoryTree {
             return Optional.of(file.get());
         }
 
+        LinkNode link = findLink("/", fullPath);
+
+        if (link != null) {
+            return Optional.of(link);
+        }
+
         return Optional.empty();
+    }
+
+    public LinkNode findLink(String currentPath, String requestedPath) {
+        String fullPath = normalizePath(currentPath, requestedPath);
+        String parentPath = parentPath(fullPath);
+        String name = fileName(fullPath);
+
+        Optional<DirectoryNode> parent = find(parentPath);
+        if (parent.isEmpty()) {
+            return null;
+        }
+
+        return parent.get().getLink(name);
     }
 
     public String normalizePath(String currentPath, String requestedPath) {
@@ -419,7 +438,8 @@ public class DirectoryTree {
             throw new IllegalArgumentException("ya existe un archivo, directorio o enlace con ese nombre: " + linkName);
         }
 
-        parent.addLink(linkName, originalFile.getFullPath());
+        LinkNode link = new LinkNode(linkName, originalFile.getOwner(), originalFile.getGroup(), originalFile.getFullPath());
+        parent.addLink(link);
 
         return linkFullPath;
     }
@@ -437,9 +457,13 @@ public class DirectoryTree {
 
     private void moveLink(DirectoryNode sourceParent, String sourceName,
             DirectoryNode targetParent, String targetName) {
-        String target = sourceParent.getLinkTarget(sourceName);
+        LinkNode link = sourceParent.getLink(sourceName);
+        if (link == null) {
+            throw new IllegalArgumentException("el enlace no existe: " + sourceName);
+        }
 
-        targetParent.addLink(targetName, target);
+        LinkNode movedLink = new LinkNode(targetName, link.getOwner(), link.getGroup(), link.getTarget());
+        targetParent.addLink(movedLink);
         sourceParent.removeLink(sourceName);
     }
 
@@ -466,8 +490,9 @@ public class DirectoryTree {
             copy.addFile(copyFileWithNewPath(file, file.getName(), filePath));
         }
 
-        for (Map.Entry<String, String> link : source.getLinks().entrySet()) {
-            copy.addLink(link.getKey(), link.getValue());
+        for (Map.Entry<String, LinkNode> link : source.getLinks().entrySet()) {
+            LinkNode srcLink = link.getValue();
+            copy.addLink(new LinkNode(link.getKey(), srcLink.getOwner(), srcLink.getGroup(), srcLink.getTarget()));
         }
 
         for (DirectoryNode child : source.getDirectories()) {
@@ -511,8 +536,8 @@ public class DirectoryTree {
     private void removeLinksPointingTo(DirectoryNode directory, String targetPath) {
         List<String> linksToRemove = new ArrayList<>();
 
-        for (Map.Entry<String, String> link : directory.getLinks().entrySet()) {
-            if (link.getValue().equals(targetPath)) {
+        for (Map.Entry<String, LinkNode> link : directory.getLinks().entrySet()) {
+            if (link.getValue().getTarget().equals(targetPath)) {
                 linksToRemove.add(link.getKey());
             }
         }
@@ -533,8 +558,8 @@ public class DirectoryTree {
     private void removeLinksPointingInside(DirectoryNode directory, String directoryPath) {
         List<String> linksToRemove = new ArrayList<>();
 
-        for (Map.Entry<String, String> link : directory.getLinks().entrySet()) {
-            String target = link.getValue();
+        for (Map.Entry<String, LinkNode> link : directory.getLinks().entrySet()) {
+            String target = link.getValue().getTarget();
 
             if (target.equals(directoryPath) || target.startsWith(directoryPath + "/")) {
                 linksToRemove.add(link.getKey());
@@ -555,8 +580,8 @@ public class DirectoryTree {
     }
 
     private void updateLinksTarget(DirectoryNode directory, String oldTarget, String newTarget) {
-        for (Map.Entry<String, String> link : directory.getLinks().entrySet()) {
-            if (link.getValue().equals(oldTarget)) {
+        for (Map.Entry<String, LinkNode> link : directory.getLinks().entrySet()) {
+            if (link.getValue().getTarget().equals(oldTarget)) {
                 directory.updateLink(link.getKey(), newTarget);
             }
         }
@@ -571,8 +596,8 @@ public class DirectoryTree {
     }
 
     private void updateLinksInsideMovedDirectory(DirectoryNode directory, String oldPath, String newPath) {
-        for (Map.Entry<String, String> link : directory.getLinks().entrySet()) {
-            String target = link.getValue();
+        for (Map.Entry<String, LinkNode> link : directory.getLinks().entrySet()) {
+            String target = link.getValue().getTarget();
 
             if (target.equals(oldPath) || target.startsWith(oldPath + "/")) {
                 String updatedTarget = newPath + target.substring(oldPath.length());
@@ -621,7 +646,8 @@ public class DirectoryTree {
             throw new IllegalArgumentException("ya existe un archivo, directorio o enlace con ese nombre: " + name);
         }
 
-        parent.addLink(name, record.target);
+        LinkNode link = new LinkNode(name, record.owner, record.group, record.target);
+        parent.addLink(link);
     }
 
     private void appendDirectory(StringBuilder builder, DirectoryNode directory) {
@@ -640,7 +666,7 @@ public class DirectoryTree {
             appendFile(builder, file);
         }
 
-        for (Map.Entry<String, String> link : directory.getLinks().entrySet()) {
+        for (Map.Entry<String, LinkNode> link : directory.getLinks().entrySet()) {
             appendLink(builder, directory, link.getKey(), link.getValue());
         }
 
@@ -672,12 +698,16 @@ public class DirectoryTree {
                 .append("\n");
     }
 
-    private void appendLink(StringBuilder builder, DirectoryNode directory, String linkName, String targetPath) {
+    private void appendLink(StringBuilder builder, DirectoryNode directory, String linkName, LinkNode link) {
         builder.append("type=LINK")
                 .append("|path=")
                 .append(joinPath(directory.getPath(), linkName))
                 .append("|target=")
-                .append(targetPath)
+                .append(link.getTarget())
+                .append("|owner=")
+                .append(link.getOwner())
+                .append("|group=")
+                .append(link.getGroup())
                 .append("\n");
     }
 
@@ -912,10 +942,14 @@ public class DirectoryTree {
 
         private final String path;
         private final String target;
+        private final String owner;
+        private final String group;
 
-        private LinkRecord(String path, String target) {
+        private LinkRecord(String path, String target, String owner, String group) {
             this.path = path;
             this.target = target;
+            this.owner = owner;
+            this.group = group;
         }
 
         private static LinkRecord fromLine(String line) {
@@ -936,7 +970,12 @@ public class DirectoryTree {
                 return null;
             }
 
-            return new LinkRecord(path, target);
+            return new LinkRecord(
+                    path,
+                    target,
+                    values.getOrDefault("owner", SystemConstants.ROOT_USERNAME),
+                    values.getOrDefault("group", SystemConstants.ROOT_GROUP)
+            );
         }
     }
 }

@@ -8,6 +8,7 @@ import app.TerminalSession;
 import filesystem.nodes.DirectoryNode;
 import filesystem.nodes.DirectoryTree;
 import filesystem.nodes.FileNode;
+import filesystem.nodes.LinkNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -143,7 +144,7 @@ public class RmCommand implements Command {
         for (FileNode file : parent.getFiles()) {
             addIfMatches(matches, parentPath, file.getName(), namePattern);
         }
-        for (Map.Entry<String, String> link : parent.getLinks().entrySet()) {
+        for (Map.Entry<String, LinkNode> link : parent.getLinks().entrySet()) {
             addIfMatches(matches, parentPath, link.getKey(), namePattern);
         }
 

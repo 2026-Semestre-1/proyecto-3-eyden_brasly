@@ -8,6 +8,24 @@ package filesystem.nodes;
  *
  * @author eyden
  */
-public class LinkNode {
-    
+public class LinkNode extends FSNode {
+    private String target;
+
+    public LinkNode(String name, String owner, String group, String target) {
+        super(name, owner, group);
+        this.target = target;
+    }
+
+    public String getTarget() {
+        return target;
+    }
+
+    public void setTarget(String target) {
+        this.target = target;
+    }
+
+    @Override
+    public boolean isDirectory() {
+        return false;
+    }
 }

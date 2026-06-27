@@ -9,6 +9,7 @@ import filesystem.FileSystemMounter;
 import filesystem.nodes.DirectoryNode;
 import filesystem.nodes.DirectoryTree;
 import filesystem.nodes.FileNode;
+import filesystem.nodes.LinkNode;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -579,9 +580,9 @@ public class TerminalPanel extends JPanel {
                     matches.add(rawDirectory + file.getName());
                 }
             }
-            for (String linkName : directory.getLinks().keySet()) {
-                if (linkName.startsWith(namePrefix)) {
-                    matches.add(rawDirectory + linkName);
+            for (LinkNode link : directory.getLinks().values()) {
+                if (link.getName().startsWith(namePrefix)) {
+                    matches.add(rawDirectory + link.getName());
                 }
             }
         }

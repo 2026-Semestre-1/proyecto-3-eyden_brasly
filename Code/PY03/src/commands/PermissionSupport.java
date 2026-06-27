@@ -10,8 +10,8 @@ import filesystem.nodes.FileNode;
  *
  * @author eyden
  */
-final class PermissionSupport {
-    enum Access {
+public final class PermissionSupport {
+    public enum Access {
         READ(4),
         WRITE(2),
         EXECUTE(1);
@@ -26,7 +26,7 @@ final class PermissionSupport {
     private PermissionSupport() {
     }
 
-    static boolean hasAccess(TerminalSession session, FSNode node, Access access) {
+    public static boolean hasAccess(TerminalSession session, FSNode node, Access access) {
         if (session.isPrivileged()) {
             return true;
         }

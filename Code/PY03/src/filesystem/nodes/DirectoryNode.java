@@ -23,7 +23,7 @@ public class DirectoryNode extends FSNode {
     private int permissions;
     private final Map<String, DirectoryNode> directories;
     private final Map<String, FileNode> files;
-    private final Map<String, String> links;
+    private final Map<String, LinkNode> links;
 
     public DirectoryNode(String name, String owner, String group) {
         this(name, owner, group, SystemConstants.DEFAULT_DIRECTORY_PERMISSIONS);
@@ -115,6 +115,7 @@ public class DirectoryNode extends FSNode {
 
         children.addAll(directories.values());
         children.addAll(files.values());
+        children.addAll(links.values());
 
         return children;
     }
@@ -130,29 +131,41 @@ public class DirectoryNode extends FSNode {
     }
 
     public String getLinkTarget(String name) {
+        LinkNode link = links.get(name);
+        return link == null ? null : link.getTarget();
+    }
+
+    public LinkNode getLink(String name) {
         return links.get(name);
     }
 
-    public void addLink(String name, String targetPath) {
+    public void addLink(LinkNode link) {
+        String name = link.getName();
+
         if (hasChild(name)) {
             throw new IllegalArgumentException("Ya existe un archivo, directorio o enlace con ese nombre: " + name);
         }
 
-        links.put(name, targetPath);
+        links.put(name, link);
     }
 
-    public String removeLink(String name) {
+    public LinkNode removeLink(String name) {
         return links.remove(name);
     }
 
     public void updateLink(String name, String newTargetPath) {
-        if (links.containsKey(name)) {
-            links.put(name, newTargetPath);
+        LinkNode link = links.get(name);
+        if (link != null) {
+            link.setTarget(newTargetPath);
         }
     }
 
-    public Map<String, String> getLinks() {
+    public Map<String, LinkNode> getLinks() {
         return Collections.unmodifiableMap(links);
+    }
+
+    public boolean hasLinks() {
+        return !links.isEmpty();
     }
 
 
