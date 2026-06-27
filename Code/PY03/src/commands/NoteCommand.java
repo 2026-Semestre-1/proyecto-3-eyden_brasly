@@ -76,7 +76,7 @@ public class NoteCommand implements Command {
             }
         }
         System.out.println("--- Nuevo contenido ---");
-        System.out.println("Finalice con Ctrl+X y Enter, o escriba CTRL+X en una linea.");
+        System.out.println("Finalice con Ctrl+X.");
     }
 
     private String readEditedContent(Scanner scanner) {
