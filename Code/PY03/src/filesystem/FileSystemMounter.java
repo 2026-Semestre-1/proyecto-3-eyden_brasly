@@ -3,13 +3,30 @@ package filesystem;
 import constants.SystemConstants;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Lee las estructuras persistidas en el disco virtual y construye el objeto
  * FileSystem montado cuando la firma del MBR es valida.
  */
 public class FileSystemMounter {
+    private static final Map<String, FileSystem> cache = new HashMap<>();
+
+    public static void invalidateCache(String diskName) {
+        cache.remove(diskName);
+    }
+
+    public static void cacheFileSystem(String diskName, FileSystem fileSystem) {
+        cache.put(diskName, fileSystem);
+    }
+
     public FileSystem mount(String diskName) throws IOException {
+        FileSystem cached = cache.get(diskName);
+        if (cached != null) {
+            return cached;
+        }
+
         VirtualDisk disk = VirtualDisk.openExisting(diskName);
         MBR mbr = readMBR(disk);
 
@@ -23,7 +40,9 @@ public class FileSystemMounter {
         String rootPasswordHash = readRootPasswordHash(disk);
         filesystem.nodes.DirectoryTree directoryTree = new DirectoryTableStore().load(disk);
 
-        return new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash, directoryTree);
+        FileSystem fileSystem = new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash, directoryTree);
+        cache.put(diskName, fileSystem);
+        return fileSystem;
     }
 
     public boolean existsDisk() {

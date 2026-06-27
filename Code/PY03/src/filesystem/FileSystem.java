@@ -4,6 +4,7 @@
  */
 package filesystem;
 
+import app.TerminalSession;
 import filesystem.nodes.DirectoryTree;
 import filesystem.nodes.FileNode;
 import java.io.IOException;
@@ -114,28 +115,45 @@ public class FileSystem {
         userTableStore.save(disk, userService);
     }
 
-    public boolean openFile(FileNode file, String username, String mode) throws IOException {
+    public boolean openFile(FileNode file, String username, String mode, TerminalSession session) throws IOException {
         String path = file.getFullPath();
-        if (!openFileTable.openFile(path, username, mode)) {
+
+        if (session.isFileOpenInProcess(path)) {
             return false;
         }
 
-        file.setOpen(true);
+        if (openFileTable.getOpenCount(path) > 0) {
+            return false;
+        }
+
+        int previousCount = openFileTable.getOpenCount(path);
+        openFileTable.openFile(path);
+        session.addProcessOpenFile(path, username, mode);
+
+        if (previousCount == 0) {
+            file.setOpen(true);
+        }
 
         try {
             saveDirectories();
             return true;
         } catch (IOException exception) {
             openFileTable.closeFile(path);
-            file.setOpen(false);
+            session.removeProcessOpenFile(path);
+            if (openFileTable.getOpenCount(path) == 0) {
+                file.setOpen(false);
+            }
             throw exception;
         }
     }
 
-    public void closeFile(FileNode file) throws IOException {
+    public void closeFile(FileNode file, TerminalSession session) throws IOException {
         String path = file.getFullPath();
-        openFileTable.closeFile(path);
-        file.setOpen(false);
+        session.removeProcessOpenFile(path);
+        int remaining = openFileTable.closeFile(path);
+        if (remaining == 0) {
+            file.setOpen(false);
+        }
         saveDirectories();
     }
 }

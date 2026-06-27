@@ -21,23 +21,36 @@ public class OpenFileTable {
         this.openFiles = new LinkedHashMap<>();
     }
 
-    public boolean openFile(String path, String username, String mode) {
-        if (openFiles.containsKey(path)) {
-            return false;
+    public int openFile(String path) {
+        OpenFile entry = openFiles.get(path);
+        if (entry == null) {
+            entry = new OpenFile(path);
+            openFiles.put(path, entry);
         }
-
-        OpenFile file = new OpenFile(path, username, mode);
-        openFiles.put(path, file);
-
-        return true;
+        entry.setOpenCount(entry.getOpenCount() + 1);
+        return entry.getOpenCount();
     }
 
-    public boolean closeFile(String path) {
-        return openFiles.remove(path) != null;
+    public int closeFile(String path) {
+        OpenFile entry = openFiles.get(path);
+        if (entry == null) {
+            return 0;
+        }
+        entry.setOpenCount(entry.getOpenCount() - 1);
+        if (entry.getOpenCount() <= 0) {
+            openFiles.remove(path);
+            return 0;
+        }
+        return entry.getOpenCount();
     }
 
     public boolean isOpen(String path) {
         return openFiles.containsKey(path);
+    }
+
+    public int getOpenCount(String path) {
+        OpenFile entry = openFiles.get(path);
+        return entry == null ? 0 : entry.getOpenCount();
     }
 
     public int getTotalFiles() {

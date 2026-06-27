@@ -14,12 +14,22 @@ public class OpenFile {
     private final String username;
     private final String mode;
     private final long openedAt;
+    private int openCount;
 
     public OpenFile(String path, String username, String mode) {
         this.path = path;
         this.username = username;
         this.mode = mode;
         this.openedAt = System.currentTimeMillis();
+        this.openCount = 0;
+    }
+
+    public OpenFile(String path) {
+        this.path = path;
+        this.username = null;
+        this.mode = null;
+        this.openedAt = 0;
+        this.openCount = 0;
     }
 
     public String getPath() {
@@ -36,5 +46,13 @@ public class OpenFile {
 
     public long getOpenedAt() {
         return openedAt;
+    }
+
+    public int getOpenCount() {
+        return openCount;
+    }
+
+    public void setOpenCount(int openCount) {
+        this.openCount = openCount;
     }
 }

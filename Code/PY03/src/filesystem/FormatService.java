@@ -53,7 +53,9 @@ public class FormatService {
         new DirectoryTableStore().save(disk, directoryTree);
 
         BlockManager blockManager = new BlockManager(bitmap);
-        return new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash, directoryTree);
+        FileSystem fileSystem = new FileSystem(disk, mbr, superBlock, bitmap, blockManager, rootPasswordHash, directoryTree);
+        FileSystemMounter.cacheFileSystem(diskName, fileSystem);
+        return fileSystem;
     }
 
     private void reserveInternalBlocks(Bitmap bitmap) {

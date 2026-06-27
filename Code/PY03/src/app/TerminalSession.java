@@ -6,7 +6,12 @@ package app;
 
 import constants.SystemConstants;
 import filesystem.FileSystem;
+import filesystem.OpenFile;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import security.GroupService;
 import security.UserService;
 import security.UserService.UserAccount;
@@ -24,6 +29,7 @@ public class TerminalSession {
     private SystemMode mode;
     private String currentPath;
     private boolean running;
+    private final Map<String, OpenFile> processOpenFiles;
 
     public TerminalSession() {
         this(SystemConstants.VIRTUAL_DISK_FILE_NAME);
@@ -34,6 +40,7 @@ public class TerminalSession {
         this.mode = SystemMode.NO_FORMATTED;
         this.currentPath = "/";
         this.running = true;
+        this.processOpenFiles = new LinkedHashMap<>();
     }
 
     public void mount(FileSystem fileSystem) throws IOException {
@@ -88,6 +95,26 @@ public class TerminalSession {
                     return true;
                 })
                 .orElse(false);
+    }
+
+    public boolean isFileOpenInProcess(String path) {
+        return processOpenFiles.containsKey(path);
+    }
+
+    public boolean addProcessOpenFile(String path, String username, String mode) {
+        if (processOpenFiles.containsKey(path)) {
+            return false;
+        }
+        processOpenFiles.put(path, new OpenFile(path, username, mode));
+        return true;
+    }
+
+    public boolean removeProcessOpenFile(String path) {
+        return processOpenFiles.remove(path) != null;
+    }
+
+    public Collection<OpenFile> getProcessOpenFiles() {
+        return Collections.unmodifiableCollection(processOpenFiles.values());
     }
 
     public String getPrompt() {

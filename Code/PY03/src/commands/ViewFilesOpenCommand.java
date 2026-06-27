@@ -33,15 +33,31 @@ public class ViewFilesOpenCommand implements Command {
             return;
         }
 
-        OpenFileTable table = session.getFileSystem().getOpenFileTable();
-        System.out.println("Total de archivos abiertos: " + table.getTotalFiles());
+        var processFiles = session.getProcessOpenFiles();
+        OpenFileTable globalTable = session.getFileSystem().getOpenFileTable();
 
-        for (OpenFile file : table.getOpenFiles()) {
+        System.out.println("--- Archivos abiertos en esta terminal ---");
+        System.out.println("Total: " + processFiles.size());
+
+        for (OpenFile file : processFiles) {
+            int globalCount = globalTable.getOpenCount(file.getPath());
             System.out.println(
                     file.getPath()
                     + " | usuario=" + file.getUsername()
                     + " | modo=" + file.getMode()
                     + " | apertura=" + DateUtil.formatMillis(file.getOpenedAt())
+                    + " | aperturas globales=" + globalCount
+            );
+        }
+
+        System.out.println();
+        System.out.println("--- Tabla global del sistema ---");
+        System.out.println("Archivos distintos abiertos: " + globalTable.getTotalFiles());
+
+        for (OpenFile entry : globalTable.getOpenFiles()) {
+            System.out.println(
+                    entry.getPath()
+                    + " | contador=" + entry.getOpenCount()
             );
         }
     }

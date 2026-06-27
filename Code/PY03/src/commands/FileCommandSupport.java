@@ -68,7 +68,8 @@ final class FileCommandSupport {
             boolean opened = fileSystem.openFile(
                     file,
                     session.getActiveUser().getUsername(),
-                    mode
+                    mode,
+                    session
             );
 
             if (!opened) {
@@ -94,7 +95,7 @@ final class FileCommandSupport {
 
     static void closeFile(TerminalSession session, FileNode file, String commandName) {
         try {
-            session.getFileSystem().closeFile(file);
+            session.getFileSystem().closeFile(file, session);
         } catch (IOException exception) {
             System.out.println(commandName + ": no se pudo cerrar el archivo: " + exception.getMessage());
         }
