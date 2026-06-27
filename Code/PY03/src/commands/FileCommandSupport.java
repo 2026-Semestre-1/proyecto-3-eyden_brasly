@@ -12,7 +12,7 @@ final class FileCommandSupport {
     static FileNode findFile(TerminalSession session, String requestedPath, String commandName) {
         return session.getFileSystem()
                 .getDirectoryTree()
-                .findFile(session.getCurrentPath(), requestedPath)
+                .findFileResolvingLink(session.getCurrentPath(), requestedPath)
                 .orElseGet(() -> {
                     System.out.println(commandName + ": no existe el archivo: " + requestedPath);
                     return null;

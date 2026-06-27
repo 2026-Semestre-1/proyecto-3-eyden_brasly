@@ -55,6 +55,7 @@ public class RmCommand implements Command {
 
         DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
         boolean removedAny = false;
+        boolean freedBlocks = false;
 
         for (String target : targets) {
             try {
@@ -66,6 +67,7 @@ public class RmCommand implements Command {
 
                 for (FileNode file : removedFiles) {
                     session.getFileSystem().getBlockManager().freeBlocks(file.getFCB().getBlocks());
+                    freedBlocks = true;
                 }
 
                 removedAny = true;
@@ -79,8 +81,11 @@ public class RmCommand implements Command {
         if (removedAny) {
             try {
                 session.getFileSystem().saveDirectories();
+                if (freedBlocks) {
+                    session.getFileSystem().saveBitmap();
+                }
             } catch (IOException exception) {
-                System.out.println("rm: no se pudo guardar la tabla de directorios: " + exception.getMessage());
+                System.out.println("rm: no se pudieron guardar los cambios: " + exception.getMessage());
             }
         }
     }

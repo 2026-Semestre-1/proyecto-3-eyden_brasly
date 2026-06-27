@@ -122,6 +122,32 @@ public class DirectoryTree {
         return Optional.ofNullable(parent.get().getFile(fileName));
     }
 
+    public Optional<FileNode> findFileResolvingLink(String currentPath, String requestedPath) {
+        String fullPath = normalizePath(currentPath, requestedPath);
+        String parentPath = parentPath(fullPath);
+        String name = fileName(fullPath);
+
+        Optional<DirectoryNode> parent = find(parentPath);
+
+        if (parent.isEmpty()) {
+            return Optional.empty();
+        }
+
+        FileNode file = parent.get().getFile(name);
+
+        if (file != null) {
+            return Optional.of(file);
+        }
+
+        String targetPath = parent.get().getLinkTarget(name);
+
+        if (targetPath == null || targetPath.isBlank()) {
+            return Optional.empty();
+        }
+
+        return findFile("/", targetPath);
+    }
+
     public Optional<FSNode> findNode(String currentPath, String requestedPath) {
         String fullPath = normalizePath(currentPath, requestedPath);
 

@@ -4,6 +4,7 @@ import app.TerminalSession;
 import filesystem.nodes.DirectoryNode;
 import filesystem.nodes.DirectoryTree;
 import filesystem.nodes.FileNode;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -57,8 +58,9 @@ public class LsCommand implements Command {
     private void listDirectory(DirectoryNode directory) {
         boolean emptyDirectories = directory.getDirectories().isEmpty();
         boolean emptyFiles = directory.getFiles().isEmpty();
+        boolean emptyLinks = directory.getLinks().isEmpty();
 
-        if (emptyDirectories && emptyFiles) {
+        if (emptyDirectories && emptyFiles && emptyLinks) {
             System.out.println("(vacio)");
             return;
         }
@@ -69,6 +71,10 @@ public class LsCommand implements Command {
 
         for (FileNode file : directory.getFiles()) {
             System.out.println("[FILE] " + file.getName());
+        }
+
+        for (Map.Entry<String, String> link : directory.getLinks().entrySet()) {
+            System.out.println("[LINK] " + link.getKey() + " -> " + link.getValue());
         }
     }
 
