@@ -5,6 +5,7 @@
 package commands;
 
 import app.TerminalSession;
+import filesystem.nodes.DirectoryNode;
 import filesystem.nodes.FSNode;
 import filesystem.nodes.FileNode;
 import java.io.IOException;
@@ -29,38 +30,30 @@ public class ChgrpCommand implements Command {
 
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
-        if (args.length < 2) {
-            System.out.println("Uso: chgrp <grupo> <archivo|directorio> [archivo|directorio...]");
+        boolean recursive = args.length > 0 && "-R".equals(args[0]);
+        int argOffset = recursive ? 1 : 0;
+
+        if (args.length - argOffset < 2) {
+            System.out.println("Uso: chgrp [-R] <grupo> <archivo|directorio> [archivo|directorio...]");
             return;
         }
 
-        String newGroup = args[0].trim().toLowerCase();
+        String newGroup = args[argOffset].trim().toLowerCase();
         if (!session.getGroupService().exists(newGroup)) {
             System.out.println("chgrp: no existe el grupo: " + newGroup);
             return;
         }
 
         boolean changedAny = false;
-        for (int index = 1; index < args.length; index++) {
+        for (int index = argOffset + 1; index < args.length; index++) {
             FSNode node = FileCommandSupport.findNode(session, args[index], getName());
-            if (node == null) {
-                continue;
-            }
+            if (node == null) continue;
 
-            String path = session.getFileSystem().getDirectoryTree()
-                    .normalizePath(session.getCurrentPath(), args[index]);
-            if (!PermissionSupport.canChangeGroup(session, node, newGroup)) {
-                PermissionSupport.deny(getName(), "cambiar grupo", path);
-                continue;
+            if (recursive && node.isDirectory()) {
+                changedAny |= changeGroupRecursive((DirectoryNode) node, newGroup, session);
+            } else {
+                changedAny |= changeGroup(node, newGroup, session);
             }
-
-            node.setGroup(newGroup);
-            if (node instanceof FileNode file) {
-                file.setGroup(newGroup);
-            }
-
-            changedAny = true;
-            System.out.println("Grupo actualizado: " + path + " -> " + newGroup);
         }
 
         if (changedAny) {
@@ -70,5 +63,31 @@ public class ChgrpCommand implements Command {
                 System.out.println("chgrp: no se pudieron guardar los cambios: " + exception.getMessage());
             }
         }
+    }
+
+    private boolean changeGroupRecursive(DirectoryNode dir, String newGroup, TerminalSession session) {
+        boolean changed = false;
+        for (FSNode child : dir.getChildren()) {
+            if (child.isDirectory()) {
+                changed |= changeGroupRecursive((DirectoryNode) child, newGroup, session);
+            } else {
+                changed |= changeGroup(child, newGroup, session);
+            }
+        }
+        changed |= changeGroup(dir, newGroup, session);
+        return changed;
+    }
+
+    private boolean changeGroup(FSNode node, String newGroup, TerminalSession session) {
+        String path = node instanceof FileNode f ? f.getFullPath()
+                : node instanceof DirectoryNode d ? d.getPath() : node.getName();
+        if (!PermissionSupport.canChangeGroup(session, node, newGroup)) {
+            PermissionSupport.deny(getName(), "cambiar grupo", path);
+            return false;
+        }
+        node.setGroup(newGroup);
+        if (node instanceof FileNode file) file.setGroup(newGroup);
+        System.out.println("Grupo actualizado: " + path + " -> " + newGroup);
+        return true;
     }
 }
