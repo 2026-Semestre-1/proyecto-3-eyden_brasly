@@ -26,6 +26,12 @@ public class LessCommand implements Command {
         return "Muestra el contenido de un archivo por paginas.";
     }
 
+    /**
+     * Ejecuta el comando less, mostrando el contenido de un archivo por páginas.
+     * @param args Los argumentos del comando, donde args[0] es el nombre del archivo.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length != 1) {
@@ -47,7 +53,11 @@ public class LessCommand implements Command {
             FileCommandSupport.closeFile(session, file, getName());
         }
     }
-
+    /**
+     * Muestra el contenido del archivo por páginas, permitiendo al usuario avanzar o salir.
+     * @param content El contenido del archivo a mostrar.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     private void showPages(String content, Scanner scanner) {
         if (content.isEmpty()) {
             System.out.println("(archivo vacio)");

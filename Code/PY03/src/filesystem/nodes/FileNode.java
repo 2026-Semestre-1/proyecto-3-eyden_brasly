@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package filesystem.nodes;
+
 /**
  * Nodo que representa un archivo dentro del arbol de directorios.
  * Cada archivo tiene un FCB con su informacion tecnica.
@@ -13,11 +14,23 @@ public class FileNode extends FSNode {
 
     private FCB fcb;
 
+    /**
+     * Crea un FileNode con un nuevo FCB a partir de los datos basicos del archivo.
+     * @param name        nombre del archivo
+     * @param owner       propietario del archivo
+     * @param group       grupo propietario del archivo
+     * @param permissions permisos del archivo en octal
+     * @param fullPath    ruta absoluta del archivo
+     */
     public FileNode(String name, String owner, String group, int permissions, String fullPath) {
         super(name, owner, group);
         this.fcb = new FCB(name, owner, group, permissions, fullPath);
     }
 
+    /**
+     * Crea un FileNode usando un FCB existente.
+     * @param fcb objeto FCB con los datos tecnicos del archivo
+     */
     public FileNode(FCB fcb) {
         super(fcb.getName(), fcb.getOwner(), fcb.getGroup());
         this.fcb = fcb;
@@ -61,6 +74,10 @@ public class FileNode extends FSNode {
         fcb.setSize(size);
     }
 
+    /**
+     * Indica que este nodo no es un directorio.
+     * @return false siempre
+     */
     @Override
     public boolean isDirectory() {
         return false;

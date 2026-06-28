@@ -109,7 +109,10 @@ public class DirectoryNode extends FSNode {
     public boolean isEmpty() {
         return directories.isEmpty() && files.isEmpty() && links.isEmpty();
     }
-
+    /**
+     * Obtiene todos los hijos del directorio, incluyendo subdirectorios, archivos y enlaces.
+     * @return Una lista de todos los nodos hijos del directorio.
+     */
     public List<FSNode> getChildren() {
         List<FSNode> children = new ArrayList<>();
 
@@ -119,26 +122,52 @@ public class DirectoryNode extends FSNode {
 
         return children;
     }
+    /**
+     * Elimina un directorio hijo del directorio actual.
+     * @param name El nombre del directorio a eliminar.
+     * @return El nodo de directorio eliminado, o null si no se encontró.
+     */
     public DirectoryNode removeDirectory(String name) {
         return directories.remove(name);
     }
-
+    /**
+     * Elimina un archivo hijo del directorio actual.
+     * @param name El nombre del archivo a eliminar.
+     * @return El nodo de archivo eliminado, o null si no se encontró.
+     */
     public FileNode removeFile(String name) {
         return files.remove(name);
     }
+    /**
+     * Actualiza el nombre de un directorio hijo del directorio actual.
+     * @param oldName El nombre actual del directorio.
+     * @param newName El nuevo nombre a asignar al directorio.
+     */
     public boolean hasLink(String name) {
         return links.containsKey(name);
     }
 
+    /**
+     * Obtiene el nodo de enlace hijo del directorio actual por su nombre.
+     * @param name El nombre del enlace a obtener.
+     * @return El nodo de enlace encontrado, o null si no se encontró.
+     */
     public String getLinkTarget(String name) {
         LinkNode link = links.get(name);
         return link == null ? null : link.getTarget();
     }
-
+    /**
+     * Actualiza el nombre de un archivo hijo del directorio actual.
+     * @param oldName El nombre actual del archivo.
+     * @param newName El nuevo nombre a asignar al archivo.
+     */
     public LinkNode getLink(String name) {
         return links.get(name);
     }
-
+    /**
+     * Agrega un enlace hijo al directorio actual.
+     * @param link El nodo de enlace a agregar.
+     */
     public void addLink(LinkNode link) {
         String name = link.getName();
 
@@ -148,27 +177,44 @@ public class DirectoryNode extends FSNode {
 
         links.put(name, link);
     }
-
+    /**
+     * Actualiza el nombre de un enlace hijo del directorio actual.
+     * @param oldName El nombre actual del enlace.
+     * @param newName El nuevo nombre a asignar al enlace.
+     */
     public LinkNode removeLink(String name) {
         return links.remove(name);
     }
-
+    /**
+     * Actualiza el nombre de un enlace hijo del directorio actual.
+     * @param oldName El nombre actual del enlace.
+     * @param newName El nuevo nombre a asignar al enlace.
+     */
     public void updateLink(String name, String newTargetPath) {
         LinkNode link = links.get(name);
         if (link != null) {
             link.setTarget(newTargetPath);
         }
     }
-
+    /**
+     * Obtiene todos los enlaces hijos del directorio actual.
+     * @return Una colección de todos los nodos de enlace hijos del directorio.
+     */
     public Map<String, LinkNode> getLinks() {
         return Collections.unmodifiableMap(links);
     }
-
+    /**
+     * Verifica si el directorio actual tiene enlaces hijos.
+     * @return true si hay enlaces hijos, false en caso contrario.
+     */
     public boolean hasLinks() {
         return !links.isEmpty();
     }
 
-
+    /**
+     * Obtiene la ruta completa del directorio actual desde la raíz del sistema de archivos.
+     * @return La ruta completa del directorio.
+     */
     public String getPath() {
         if (parent == null) {
             return "/";

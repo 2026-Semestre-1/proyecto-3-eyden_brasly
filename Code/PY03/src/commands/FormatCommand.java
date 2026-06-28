@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que formatea el disco virtual y crea un nuevo sistema de archivos.
  * @author eyden
  */
 public class FormatCommand implements Command {
@@ -27,7 +27,12 @@ public class FormatCommand implements Command {
     public String getDescription() {
         return "Crea y monta el File System en el disco virtual.";
     }
-
+    /**
+     * Ejecuta el comando format, formateando el disco virtual y creando un nuevo sistema de archivos.
+     * @param args Los argumentos del comando (no se utilizan en este comando).
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length > 0) {
@@ -70,7 +75,12 @@ public class FormatCommand implements Command {
             System.out.println("format: " + exception.getMessage());
         }
     }
-
+    /**
+     * Solicita al usuario la confirmación para sobrescribir el disco virtual existente.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     * @return true si el usuario confirma la sobrescritura, false en caso contrario.
+     */
     private boolean confirmOverwriteIfNeeded(TerminalSession session, Scanner scanner) {
         File diskFile = new File(session.getDiskName());
         if (!diskFile.exists() && session.getMode() == SystemMode.NO_FORMATTED) {
@@ -80,7 +90,11 @@ public class FormatCommand implements Command {
         String answer = CommandIO.prompt(scanner, "Ya existe un disco virtual. Se borrara su contenido. Escriba SI para continuar: ");
         return "SI".equalsIgnoreCase(answer.trim());
     }
-
+    /**
+     * Solicita al usuario el tamaño del disco virtual en megabytes.
+     * @param scanner El escáner para leer la entrada del usuario.
+     * @return El tamaño del disco en megabytes.
+     */
     private int readDiskSize(Scanner scanner) {
         while (true) {
             String value = CommandIO.prompt(scanner, "Tamano del disco en MB: ");

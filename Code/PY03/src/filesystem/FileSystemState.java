@@ -14,6 +14,9 @@ public class FileSystemState {
     private FileSystem fileSystem;
     private String currentPath;
 
+    /**
+     * Crea el estado con la ruta actual inicializada en la raiz.
+     */
     public FileSystemState() {
         this.currentPath = "/";
     }

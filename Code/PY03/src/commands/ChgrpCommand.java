@@ -27,7 +27,12 @@ public class ChgrpCommand implements Command {
     public String getDescription() {
         return "Cambia el grupo de archivos o directorios.";
     }
-
+    /**
+     * Ejecuta el comando chgrp, cambiando el grupo de archivos o directorios especificados.
+     * @param args Los argumentos del comando, donde args[0] es el nuevo grupo y los siguientes son los archivos o directorios a modificar.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         boolean recursive = args.length > 0 && "-R".equals(args[0]);
@@ -64,7 +69,13 @@ public class ChgrpCommand implements Command {
             }
         }
     }
-
+    /**
+     * Cambia el grupo de un directorio y todos sus hijos de manera recursiva.
+     * @param dir El directorio cuyo grupo se desea cambiar.
+     * @param newGroup El nuevo grupo a asignar.
+     * @param session La sesión de terminal actual.
+     * @return true si se cambió al menos un grupo, false en caso contrario.
+     */
     private boolean changeGroupRecursive(DirectoryNode dir, String newGroup, TerminalSession session) {
         boolean changed = false;
         for (FSNode child : dir.getChildren()) {
@@ -77,7 +88,13 @@ public class ChgrpCommand implements Command {
         changed |= changeGroup(dir, newGroup, session);
         return changed;
     }
-
+    /**
+     * Cambia el grupo de un nodo de archivo o directorio.
+     * @param node El nodo cuyo grupo se desea cambiar.
+     * @param newGroup El nuevo grupo a asignar.
+     * @param session La sesión de terminal actual.
+     * @return true si se cambió el grupo, false en caso contrario.
+     */
     private boolean changeGroup(FSNode node, String newGroup, TerminalSession session) {
         String path = node instanceof FileNode f ? f.getFullPath()
                 : node instanceof DirectoryNode d ? d.getPath() : node.getName();

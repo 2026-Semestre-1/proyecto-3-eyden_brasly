@@ -9,7 +9,7 @@ import constants.SystemConstants;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que permite cambiar el usuario activo de la sesión de terminal.
  * @author eyden
  */
 public class SuCommand implements Command {
@@ -22,7 +22,12 @@ public class SuCommand implements Command {
     public String getDescription() {
         return "Cambia el usuario activo de la sesion.";
     }
-
+    /**
+     * Ejecuta el comando su, permitiendo al usuario cambiar el usuario activo de la sesión de terminal.
+     * @param args Los argumentos del comando, donde args[0] es opcionalmente el nombre del usuario al que se desea cambiar.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length > 1) {
@@ -48,7 +53,11 @@ public class SuCommand implements Command {
         moveToHomeDirectory(session, normalizedUsername);
         System.out.println("Sesion cambiada a '" + normalizedUsername + "'.");
     }
-
+    /**
+     * Mueve la sesión al directorio home del usuario especificado.
+     * @param session La sesión de terminal actual.
+     * @param username El nombre del usuario cuyo directorio home se desea establecer como directorio actual.
+     */
     private void moveToHomeDirectory(TerminalSession session, String username) {
         String homePath = SystemConstants.ROOT_USERNAME.equals(username)
                 ? SystemConstants.ROOT_HOME_PATH

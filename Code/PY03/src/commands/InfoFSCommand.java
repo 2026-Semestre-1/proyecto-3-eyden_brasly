@@ -10,7 +10,7 @@ import filesystem.SuperBlock;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que muestra información del File System montado.
  * @author eyden
  */
 public class InfoFSCommand implements Command {
@@ -23,7 +23,12 @@ public class InfoFSCommand implements Command {
     public String getDescription() {
         return "Muestra informacion del File System montado.";
     }
-
+    /**
+     * Ejecuta el comando infoFS, mostrando información del File System montado.
+     * @param args Los argumentos del comando (no se utilizan en este comando).
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length > 0) {

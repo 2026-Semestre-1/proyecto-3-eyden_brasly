@@ -14,6 +14,13 @@ import security.GroupService.GroupRecord;
  * @author eyden
  */
 public class GroupTableStore {
+
+    /**
+     * Carga los grupos desde los bloques reservados del disco.
+     * @param disk disco virtual de donde leer
+     * @return servicio de grupos con los registros restaurados
+     * @throws IOException si los datos son invalidos
+     */
     public GroupService load(VirtualDisk disk) throws IOException {
         String text = readText(disk);
         List<GroupRecord> records = new ArrayList<>();
@@ -34,6 +41,12 @@ public class GroupTableStore {
         }
     }
 
+    /**
+     * Guarda los grupos en los bloques reservados del disco.
+     * @param disk         disco virtual donde escribir
+     * @param groupService servicio de grupos con los datos a persistir
+     * @throws IOException si los datos exceden el espacio reservado
+     */
     public void save(VirtualDisk disk, GroupService groupService) throws IOException {
         StringBuilder builder = new StringBuilder();
 

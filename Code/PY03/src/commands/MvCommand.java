@@ -26,7 +26,12 @@ public class MvCommand implements Command {
     public String getDescription() {
         return "Mueve o renombra archivos y directorios.";
     }
-
+    /**
+     * Ejecuta el comando mv, moviendo o renombrando archivos, directorios y enlaces.
+     * @param args Los argumentos del comando, donde args[0] es la ruta de origen y args[1] es la ruta de destino.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length != 2) {

@@ -27,6 +27,12 @@ public class LnCommand implements Command {
         return "Crea un enlace hacia un archivo existente.";
     }
 
+    /**
+     * Ejecuta el comando ln, creando un enlace hacia un archivo existente.
+     * @param args Los argumentos del comando, donde args[0] es el nombre del archivo original y args[1] es el nombre del enlace.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length != 2) {

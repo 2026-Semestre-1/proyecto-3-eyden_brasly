@@ -25,7 +25,12 @@ public class ViewFilesOpenCommand implements Command {
     public String getDescription() {
         return "Muestra los archivos abiertos en la sesion.";
     }
-
+    /**
+     * Ejecuta el comando viewFilesOpen, mostrando los archivos abiertos en la sesión de terminal y la tabla global del sistema.
+     * @param args Los argumentos del comando (no se utilizan en este comando).
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length != 0) {

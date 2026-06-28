@@ -12,10 +12,28 @@ import security.UserService;
  * minima para montar el sistema en ejecuciones futuras.
  */
 public class FormatService {
+
+    /**
+     * Formatea el disco virtual por defecto con el tamano especificado.
+     * @param sizeMB       tamano del disco en megabytes
+     * @param rootPassword contrasena del usuario root
+     * @return sistema de archivos formateado y montado
+     * @throws IOException si ocurre un error de escritura
+     */
     public FileSystem format(int sizeMB, String rootPassword) throws IOException {
         return format(SystemConstants.VIRTUAL_DISK_FILE_NAME, sizeMB, AllocationStrategy.INDEXED, rootPassword);
     }
 
+    /**
+     * Formatea un disco virtual creando todas las estructuras del sistema de archivos:
+     * MBR, superbloque, bitmap, tablas de usuarios/grupos y arbol de directorios.
+     * @param diskName       nombre del archivo de disco
+     * @param sizeMB         tamano del disco en megabytes
+     * @param strategy       estrategia de asignacion de bloques
+     * @param rootPassword   contrasena del usuario root
+     * @return sistema de archivos formateado y montado
+     * @throws IOException si ocurre un error de escritura
+     */
     public FileSystem format(String diskName, int sizeMB, AllocationStrategy strategy, String rootPassword) throws IOException {
         if (sizeMB <= 0) {
             throw new IllegalArgumentException("el tamano del disco debe ser mayor a cero.");

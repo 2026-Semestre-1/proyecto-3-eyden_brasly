@@ -9,10 +9,23 @@ import filesystem.nodes.FileNode;
 import java.io.IOException;
 import java.util.Optional;
 
+/**
+ * Clase de soporte para comandos relacionados con archivos y directorios.
+ * Proporciona métodos auxiliares para encontrar archivos, directorios y nodos en el sistema de archivos,
+ * así como para abrir y cerrar archivos de manera segura.
+ *
+ * @author brasly
+ */
 final class FileCommandSupport {
     private FileCommandSupport() {
     }
-
+    /**
+     * Busca un archivo en el sistema de archivos de la sesión de terminal.
+     * @param session La sesión de terminal actual.
+     * @param requestedPath La ruta del archivo solicitado.
+     * @param commandName El nombre del comando que realiza la búsqueda (para mensajes de error).
+     * @return El nodo de archivo encontrado, o null si no se encuentra.
+     */
     static FileNode findFile(TerminalSession session, String requestedPath, String commandName) {
         return session.getFileSystem()
                 .getDirectoryTree()
@@ -23,6 +36,13 @@ final class FileCommandSupport {
                 });
     }
 
+    /**
+     * Busca un nodo en el sistema de archivos de la sesión de terminal.
+     * @param session La sesión de terminal actual.
+     * @param requestedPath La ruta del nodo solicitado.
+     * @param commandName El nombre del comando que realiza la búsqueda (para mensajes de error).
+     * @return El nodo encontrado, o null si no se encuentra.
+     */
     static FSNode findNode(TerminalSession session, String requestedPath, String commandName) {
         DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
         String fullPath = directoryTree.normalizePath(session.getCurrentPath(), requestedPath);
@@ -35,7 +55,13 @@ final class FileCommandSupport {
 
         return node.get();
     }
-
+    /**
+     * Busca un directorio en el sistema de archivos de la sesión de terminal.
+     * @param session La sesión de terminal actual.
+     * @param requestedPath La ruta del directorio solicitado.
+     * @param commandName El nombre del comando que realiza la búsqueda (para mensajes de error).
+     * @return El nodo de directorio encontrado, o null si no se encuentra.
+     */
     static DirectoryNode findDirectory(TerminalSession session, String requestedPath, String commandName) {
         DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
         String fullPath = directoryTree.normalizePath(session.getCurrentPath(), requestedPath);
@@ -48,7 +74,14 @@ final class FileCommandSupport {
 
         return directory.get();
     }
-
+    /**
+     * Abre un archivo en el sistema de archivos de la sesión de terminal, verificando los permisos de acceso.
+     * @param session La sesión de terminal actual.
+     * @param file El nodo de archivo a abrir.
+     * @param mode El modo de apertura del archivo ("LECTURA" o "ESCRITURA").
+     * @param commandName El nombre del comando que realiza la apertura (para mensajes de error).
+     * @return true si el archivo se abrió correctamente, false en caso contrario.
+     */
     static boolean openFile(
             TerminalSession session,
             FileNode file,
@@ -82,17 +115,30 @@ final class FileCommandSupport {
             return false;
         }
     }
-
+    /**
+     * Obtiene el directorio padre de una ruta dada.
+     * @param path La ruta de la cual se desea obtener el directorio padre.
+     * @return La ruta del directorio padre, o "/" si no hay un directorio padre.
+     */
     static String parentPath(String path) {
         int separator = path.lastIndexOf('/');
         return separator <= 0 ? "/" : path.substring(0, separator);
     }
-
+    /**
+     * Obtiene el nombre del archivo o directorio de una ruta dada.
+     * @param path La ruta de la cual se desea obtener el nombre del archivo o directorio.
+     * @return El nombre del archivo o directorio.
+     */
     static String fileName(String path) {
         int separator = path.lastIndexOf('/');
         return separator == -1 ? path : path.substring(separator + 1);
     }
-
+    /**
+     * Cierra un archivo en el sistema de archivos de la sesión de terminal.
+     * @param session La sesión de terminal actual.
+     * @param file El nodo de archivo a cerrar.
+     * @param commandName El nombre del comando que realiza el cierre (para mensajes de error).
+     */
     static void closeFile(TerminalSession session, FileNode file, String commandName) {
         try {
             session.getFileSystem().closeFile(file, session);

@@ -7,6 +7,13 @@ import java.io.IOException;
  * Lee y persiste el bitmap en los bloques reservados del disco virtual.
  */
 public class BitmapStore {
+
+    /**
+     * Carga el bitmap desde los bloques reservados del disco.
+     * @param disk disco virtual de donde leer
+     * @return bitmap restaurado con el estado de los bloques
+     * @throws IOException si ocurre un error de lectura o los datos son invalidos
+     */
     public Bitmap load(VirtualDisk disk) throws IOException {
         byte[] data = new byte[getStorageSize()];
 
@@ -28,6 +35,12 @@ public class BitmapStore {
         }
     }
 
+    /**
+     * Guarda el bitmap en los bloques reservados del disco.
+     * @param disk   disco virtual donde escribir
+     * @param bitmap bitmap con el estado de bloques a persistir
+     * @throws IOException si ocurre un error de escritura o los datos son invalidos
+     */
     public void save(VirtualDisk disk, Bitmap bitmap) throws IOException {
         byte[] data;
 

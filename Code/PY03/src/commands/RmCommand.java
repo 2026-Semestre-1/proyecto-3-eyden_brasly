@@ -35,7 +35,13 @@ public class RmCommand implements Command {
     public String getDescription() {
         return "Elimina archivos o directorios.";
     }
-
+    /**
+     * Ejecuta el comando rm, eliminando archivos, enlaces y directorios vacíos.
+     * Con la opción -R, elimina directorios de forma recursiva.
+     * @param args Los argumentos del comando, donde args[0] es la ruta del archivo o directorio a eliminar y args[1] es opcionalmente la opción -R para eliminar directorios de forma recursiva.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length == 0) {
@@ -107,7 +113,13 @@ public class RmCommand implements Command {
             }
         }
     }
-
+    /**
+     * Expande los patrones de comodines en la ruta del objetivo y devuelve una lista de rutas coincidentes.
+     * @param session La sesión de terminal actual.
+     * @param directoryTree El árbol de directorios del sistema de archivos.
+     * @param target La ruta del objetivo que puede contener patrones de comodines.
+     * @return Una lista de rutas coincidentes después de expandir los patrones de comodines.
+     */
     private List<String> expandTargets(TerminalSession session, DirectoryTree directoryTree, String target) {
         if (!WildcardMatcher.hasWildcard(target)) {
             return List.of(directoryTree.normalizePath(session.getCurrentPath(), target));
@@ -157,6 +169,14 @@ public class RmCommand implements Command {
         }
     }
 
+    /**
+     * Verifica si se puede eliminar un archivo o directorio.
+     * @param session La sesión de terminal actual.
+     * @param directoryTree El árbol de directorios del sistema de archivos.
+     * @param fullPath La ruta completa del archivo o directorio a eliminar.
+     * @param recursive Indica si se debe eliminar de forma recursiva.
+     * @return true si se puede eliminar, false en caso contrario.
+     */
     private boolean canRemove(
             TerminalSession session,
             DirectoryTree directoryTree,
@@ -207,7 +227,12 @@ public class RmCommand implements Command {
 
         throw new IllegalArgumentException("no existe el archivo o directorio: " + fullPath);
     }
-
+    /**
+     * Verifica si se puede eliminar un directorio de forma recursiva.
+     * @param session La sesión de terminal actual.
+     * @param directory El directorio a verificar.
+     * @return true si se puede eliminar de forma recursiva, false en caso contrario.
+     */
     private boolean canRemoveRecursive(TerminalSession session, DirectoryNode directory) {
         if (!PermissionSupport.hasAll(
                 session,

@@ -17,14 +17,21 @@ public class DirectoryTree {
     public DirectoryTree() {
         this.root = new DirectoryNode("", SystemConstants.ROOT_USERNAME, SystemConstants.ROOT_GROUP);
     }
-
+    /**
+     * Crea un árbol de directorios inicial con la estructura básica del sistema de archivos.
+     * @return Un objeto DirectoryTree con la estructura inicial.
+     */
     public static DirectoryTree createInitialTree() {
         DirectoryTree tree = new DirectoryTree();
         tree.createDirectory("/", "user", SystemConstants.ROOT_USERNAME, SystemConstants.ROOT_GROUP);
         tree.createDirectory("/user", SystemConstants.ROOT_USERNAME, SystemConstants.ROOT_USERNAME, SystemConstants.ROOT_GROUP);
         return tree;
     }
-
+    /**
+     * Crea un árbol de directorios a partir de una representación en texto.
+     * @param data La representación en texto del árbol de directorios.
+     * @return Un objeto DirectoryTree construido a partir de la representación en texto.
+     */
     public static DirectoryTree fromText(String data) {
         DirectoryTree tree = new DirectoryTree();
 
@@ -77,16 +84,27 @@ public class DirectoryTree {
 
         return tree;
     }
-
+    /**
+     * Convierte el árbol de directorios en una representación en texto.
+     * @return Una cadena de texto que representa el árbol de directorios.
+     */
     public String toText() {
         StringBuilder builder = new StringBuilder();
         appendDirectory(builder, root);
         return builder.toString();
     }
-
+    /**
+     * Obtiene el nodo raíz del árbol de directorios.
+     * @return El nodo raíz del árbol.
+     */
     public DirectoryNode getRoot() {
         return root;
     }
+    /**
+     * Busca un directorio en el árbol a partir de una ruta dada.
+     * @param path La ruta del directorio a buscar.
+     * @return Un Optional que contiene el nodo del directorio si se encuentra, o vacío si no se encuentra.
+     */
 
     public Optional<DirectoryNode> find(String path) {
         String normalizedPath = normalizePath("/", path);
@@ -107,7 +125,12 @@ public class DirectoryTree {
 
         return Optional.of(current);
     }
-
+    /**
+     * Busca un archivo en el árbol a partir de una ruta dada.
+     * @param currentPath La ruta actual desde la que se realiza la búsqueda.
+     * @param requestedPath La ruta del archivo a buscar.
+     * @return Un Optional que contiene el nodo del archivo si se encuentra, o vacío si no se encuentra.
+     */
     public Optional<FileNode> findFile(String currentPath, String requestedPath) {
         String fullPath = normalizePath(currentPath, requestedPath);
         String parentPath = parentPath(fullPath);
@@ -121,7 +144,12 @@ public class DirectoryTree {
 
         return Optional.ofNullable(parent.get().getFile(fileName));
     }
-
+    /**
+     * Busca un archivo en el árbol a partir de una ruta dada, resolviendo enlaces simbólicos si es necesario.
+     * @param currentPath La ruta actual desde la que se realiza la búsqueda.
+     * @param requestedPath La ruta del archivo a buscar.
+     * @return Un Optional que contiene el nodo del archivo si se encuentra, o vacío si no se encuentra.
+     */
     public Optional<FileNode> findFileResolvingLink(String currentPath, String requestedPath) {
         String fullPath = normalizePath(currentPath, requestedPath);
         String parentPath = parentPath(fullPath);
@@ -147,6 +175,12 @@ public class DirectoryTree {
 
         return findFile("/", link.getTarget());
     }
+    /**
+     * Busca un nodo (archivo, directorio o enlace) en el árbol a partir de una ruta dada.
+     * @param currentPath La ruta actual desde la que se realiza la búsqueda.
+     * @param requestedPath La ruta del nodo a buscar.
+     * @return Un Optional que contiene el nodo si se encuentra, o vacío si no se encuentra.
+     */
 
     public Optional<FSNode> findNode(String currentPath, String requestedPath) {
         String fullPath = normalizePath(currentPath, requestedPath);
@@ -175,7 +209,12 @@ public class DirectoryTree {
 
         return Optional.empty();
     }
-
+    /**
+     * Busca un enlace en el árbol a partir de una ruta dada.
+     * @param currentPath La ruta actual desde la que se realiza la búsqueda.
+     * @param requestedPath La ruta del enlace a buscar.
+     * @return El nodo del enlace si se encuentra, o null si no se encuentra.
+     */
     public LinkNode findLink(String currentPath, String requestedPath) {
         String fullPath = normalizePath(currentPath, requestedPath);
         String parentPath = parentPath(fullPath);
@@ -188,7 +227,12 @@ public class DirectoryTree {
 
         return parent.get().getLink(name);
     }
-
+    /**
+     * Normaliza una ruta dada, resolviendo referencias relativas y eliminando redundancias.
+     * @param currentPath La ruta actual desde la que se realiza la normalización.
+     * @param requestedPath La ruta a normalizar.
+     * @return La ruta normalizada.
+     */
     public String normalizePath(String currentPath, String requestedPath) {
         if (requestedPath == null || requestedPath.isBlank()) {
             return currentPath == null || currentPath.isBlank() ? "/" : currentPath;
@@ -221,11 +265,19 @@ public class DirectoryTree {
 
         return "/" + String.join("/", normalizedParts);
     }
-
+    /**
+     * Divide una ruta en sus partes componentes, eliminando cualquier parte vacía.
+     * @param path La ruta a dividir.
+     * @return Una lista de partes de la ruta.
+     */
     public DirectoryNode createDirectory(String parentPath, String name, String owner, String group) {
         return createDirectory(parentPath, name, owner, group, SystemConstants.DEFAULT_DIRECTORY_PERMISSIONS);
     }
-
+    /**
+     * Divide una ruta en sus partes componentes, eliminando cualquier parte vacía.
+     * @param path La ruta a dividir.
+     * @return Una lista de partes de la ruta.
+     */
     public DirectoryNode createDirectory(String parentPath, String name, String owner, String group, int permissions) {
         validateName(name);
 
@@ -241,7 +293,13 @@ public class DirectoryTree {
 
         return directory;
     }
-
+    /**
+     * Crea un archivo en el árbol a partir de un registro de archivo.
+     * @param parentPath La ruta del directorio padre donde se creará el archivo.
+     * @param name El nombre del archivo a crear.
+     * @param record El registro de archivo que contiene la información del archivo.
+     * @return El nodo del archivo creado.
+     */
     public FileNode createFile(String currentPath, String requestedPath, String owner, String group, int permissions) {
         String fullPath = normalizePath(currentPath, requestedPath);
         String parentPath = parentPath(fullPath);
@@ -261,7 +319,12 @@ public class DirectoryTree {
 
         return file;
     }
-
+    /**
+     * Busca archivos por nombre desde una ruta indicada o desde la raíz.
+     * @param fileName El nombre del archivo a buscar.
+     * @param startPath La ruta de inicio para la búsqueda.
+     * @return Una lista de rutas completas de los archivos encontrados.
+     */
     public List<String> findFilesByName(String fileName, String startPath) {
         validateName(fileName);
 
@@ -273,7 +336,12 @@ public class DirectoryTree {
 
         return results;
     }
-
+    /**
+     * Método recursivo para buscar archivos por nombre en un directorio y sus subdirectorios.
+     * @param directory El directorio actual donde se realiza la búsqueda.
+     * @param fileName El nombre del archivo a buscar.
+     * @param results La lista donde se almacenan las rutas completas de los archivos encontrados.
+     */
     private void searchFiles(DirectoryNode directory, String fileName, List<String> results) {
         FileNode file = directory.getFile(fileName);
 
@@ -285,7 +353,10 @@ public class DirectoryTree {
             searchFiles(child, fileName, results);
         }
     }
-
+    /**
+     * Valida que un nombre de archivo o directorio no sea nulo, vacío o contenga caracteres inválidos.
+     * @param name El nombre a validar.
+     */
     public FileNode removeFile(String currentPath, String requestedPath) {
         String fullPath = normalizePath(currentPath, requestedPath);
         String parentPath = parentPath(fullPath);
@@ -304,7 +375,10 @@ public class DirectoryTree {
 
         return removed;
     }
-
+    /**
+     * Elimina todos los enlaces que apuntan a un archivo o directorio específico.
+     * @param targetPath La ruta del archivo o directorio al que apuntan los enlaces.
+     */
     public List<FileNode> removeDirectory(String currentPath, String requestedPath, boolean recursive) {
         String fullPath = normalizePath(currentPath, requestedPath);
 
@@ -336,7 +410,10 @@ public class DirectoryTree {
 
         return removedFiles;
     }
-
+    /**
+     * Elimina todos los enlaces que apuntan a un archivo o directorio específico.
+     * @param targetPath La ruta del archivo o directorio al que apuntan los enlaces.
+     */
     public List<FileNode> removeNode(String currentPath, String requestedPath, boolean recursive) {
         String fullPath = normalizePath(currentPath, requestedPath);
 
@@ -367,7 +444,12 @@ public class DirectoryTree {
 
         throw new IllegalArgumentException("no existe el archivo o directorio: " + fullPath);
     }
-
+    /**
+     * Mueve un nodo (archivo, directorio o enlace) de una ruta a otra dentro del árbol de directorios.
+     * @param currentPath La ruta actual desde la que se realiza la operación.
+     * @param sourcePath La ruta del nodo a mover.
+     * @param destinationPath La ruta de destino donde se moverá el nodo.
+     */
     public void moveNode(String currentPath, String sourcePath, String destinationPath) {
         String sourceFullPath = normalizePath(currentPath, sourcePath);
 
@@ -418,7 +500,13 @@ public class DirectoryTree {
 
         throw new IllegalArgumentException("no existe el origen: " + sourceFullPath);
     }
-
+    /**
+     * Crea un enlace simbólico en el árbol de directorios.
+     * @param currentPath La ruta actual desde la que se realiza la operación.
+     * @param originalPath La ruta del archivo o directorio original al que apunta el enlace.
+     * @param linkPath La ruta donde se creará el enlace simbólico.
+     * @return La ruta completa del enlace creado.
+     */
     public String createLink(String currentPath, String originalPath, String linkPath) {
         String originalFullPath = normalizePath(currentPath, originalPath);
 
@@ -443,7 +531,15 @@ public class DirectoryTree {
 
         return linkFullPath;
     }
-
+    /**
+     * Mueve un archivo de un directorio a otro, actualizando su ruta y los enlaces que apuntan a él.
+     * @param sourceParent El directorio padre del archivo original.
+     * @param sourceName El nombre del archivo original.
+     * @param sourcePath La ruta completa del archivo original.
+     * @param targetParent El directorio padre donde se moverá el archivo.
+     * @param targetName El nuevo nombre del archivo en el directorio de destino.
+     * @param targetPath La nueva ruta completa del archivo en el directorio de destino.
+     */
     private void moveFile(DirectoryNode sourceParent, String sourceName, String sourcePath,
             DirectoryNode targetParent, String targetName, String targetPath) {
         FileNode sourceFile = sourceParent.getFile(sourceName);
@@ -454,7 +550,13 @@ public class DirectoryTree {
 
         updateLinksTarget(sourcePath, targetPath);
     }
-
+    /**
+     * Mueve un enlace de un directorio a otro, actualizando su nombre y el directorio padre.
+     * @param sourceParent El directorio padre del enlace original.
+     * @param sourceName El nombre del enlace original.
+     * @param targetParent El directorio padre donde se moverá el enlace.
+     * @param targetName El nuevo nombre del enlace en el directorio de destino.
+     */
     private void moveLink(DirectoryNode sourceParent, String sourceName,
             DirectoryNode targetParent, String targetName) {
         LinkNode link = sourceParent.getLink(sourceName);
@@ -466,7 +568,15 @@ public class DirectoryTree {
         targetParent.addLink(movedLink);
         sourceParent.removeLink(sourceName);
     }
-
+    /**
+     * Mueve un directorio de un directorio padre a otro, actualizando su ruta y los enlaces que apuntan a él o a sus contenidos.
+     * @param sourceParent El directorio padre del directorio original.
+     * @param sourceName El nombre del directorio original.
+     * @param sourcePath La ruta completa del directorio original.
+     * @param targetParent El directorio padre donde se moverá el directorio.
+     * @param targetName El nuevo nombre del directorio en el directorio de destino.
+     * @param targetPath La nueva ruta completa del directorio en el directorio de destino.
+     */
     private void moveDirectory(DirectoryNode sourceParent, String sourceName, String sourcePath,
             DirectoryNode targetParent, String targetName, String targetPath) {
         if (targetPath.equals(sourcePath) || targetPath.startsWith(sourcePath + "/")) {
@@ -481,7 +591,13 @@ public class DirectoryTree {
 
         updateLinksInsideMovedDirectory(sourcePath, targetPath);
     }
-
+    /**
+     * Crea una copia de un directorio y sus contenidos, asignándole un nuevo nombre y ruta.
+     * @param source El directorio original a copiar.
+     * @param newName El nuevo nombre del directorio copiado.
+     * @param newPath La nueva ruta completa del directorio copiado.
+     * @return El nodo del directorio copiado con el nuevo nombre y ruta.
+     */
     private DirectoryNode copyDirectoryWithNewPath(DirectoryNode source, String newName, String newPath) {
         DirectoryNode copy = new DirectoryNode(newName, source.getOwner(), source.getGroup(), source.getPermissions());
 
@@ -502,7 +618,13 @@ public class DirectoryTree {
 
         return copy;
     }
-
+    /**
+     * Crea una copia de un archivo, asignándole un nuevo nombre y ruta.
+     * @param file El archivo original a copiar.
+     * @param newName El nuevo nombre del archivo copiado.
+     * @param newPath La nueva ruta completa del archivo copiado.
+     * @return El nodo del archivo copiado con el nuevo nombre y ruta.
+     */
     private FileNode copyFileWithNewPath(FileNode file, String newName, String newPath) {
         FCB oldFCB = file.getFCB();
 
@@ -520,7 +642,11 @@ public class DirectoryTree {
 
         return new FileNode(newFCB);
     }
-
+    /**
+     * Recopila todos los archivos dentro de un directorio y sus subdirectorios.
+     * @param directory El directorio desde el cual se recopilan los archivos.
+     * @param removedFiles La lista donde se almacenan los archivos recopilados.
+     */
     private void collectFiles(DirectoryNode directory, List<FileNode> removedFiles) {
         removedFiles.addAll(directory.getFiles());
 
@@ -528,11 +654,18 @@ public class DirectoryTree {
             collectFiles(child, removedFiles);
         }
     }
-
+    /**
+     * Elimina todos los enlaces que apuntan a un archivo o directorio específico.
+     * @param targetPath La ruta del archivo o directorio al que apuntan los enlaces.
+     */
     private void removeLinksPointingTo(String targetPath) {
         removeLinksPointingTo(root, targetPath);
     }
-
+    /**
+     * Método recursivo para eliminar enlaces que apuntan a un archivo o directorio específico dentro de un directorio y sus subdirectorios.
+     * @param directory El directorio actual donde se realiza la búsqueda de enlaces.
+     * @param targetPath La ruta del archivo o directorio al que apuntan los enlaces.
+     */
     private void removeLinksPointingTo(DirectoryNode directory, String targetPath) {
         List<String> linksToRemove = new ArrayList<>();
 
@@ -554,7 +687,11 @@ public class DirectoryTree {
     private void removeLinksPointingInside(String directoryPath) {
         removeLinksPointingInside(root, directoryPath);
     }
-
+    /**
+     * Método recursivo para eliminar enlaces que apuntan a un directorio específico o a cualquier archivo dentro de ese directorio.
+     * @param directory El directorio actual donde se realiza la búsqueda de enlaces.
+     * @param directoryPath La ruta del directorio al que apuntan los enlaces.
+     */
     private void removeLinksPointingInside(DirectoryNode directory, String directoryPath) {
         List<String> linksToRemove = new ArrayList<>();
 
@@ -574,11 +711,20 @@ public class DirectoryTree {
             removeLinksPointingInside(child, directoryPath);
         }
     }
-
+    /**
+     * Actualiza los enlaces que apuntan a un archivo o directorio específico, cambiando su destino a una nueva ruta.
+     * @param oldTarget La ruta original del archivo o directorio al que apuntan los enlaces.
+     * @param newTarget La nueva ruta a la que deben apuntar los enlaces.
+     */
     private void updateLinksTarget(String oldTarget, String newTarget) {
         updateLinksTarget(root, oldTarget, newTarget);
     }
-
+    /**
+     * Método recursivo para actualizar los enlaces que apuntan a un archivo o directorio específico dentro de un directorio y sus subdirectorios.
+     * @param directory El directorio actual donde se realiza la búsqueda de enlaces.
+     * @param oldTarget La ruta original del archivo o directorio al que apuntan los enlaces.
+     * @param newTarget La nueva ruta a la que deben apuntar los enlaces.
+     */
     private void updateLinksTarget(DirectoryNode directory, String oldTarget, String newTarget) {
         for (Map.Entry<String, LinkNode> link : directory.getLinks().entrySet()) {
             if (link.getValue().getTarget().equals(oldTarget)) {
@@ -590,11 +736,20 @@ public class DirectoryTree {
             updateLinksTarget(child, oldTarget, newTarget);
         }
     }
-
+    /**
+     * Actualiza los enlaces que apuntan a un directorio específico o a cualquier archivo dentro de ese directorio, cambiando su destino a una nueva ruta.
+     * @param oldPath La ruta original del directorio al que apuntan los enlaces.
+     * @param newPath La nueva ruta a la que deben apuntar los enlaces.
+     */
     private void updateLinksInsideMovedDirectory(String oldPath, String newPath) {
         updateLinksInsideMovedDirectory(root, oldPath, newPath);
     }
-
+    /**
+     * Método recursivo para actualizar los enlaces que apuntan a un directorio específico o a cualquier archivo dentro de ese directorio dentro de un directorio y sus subdirectorios.
+     * @param directory El directorio actual donde se realiza la búsqueda de enlaces.
+     * @param oldPath La ruta original del directorio al que apuntan los enlaces.
+     * @param newPath La nueva ruta a la que deben apuntar los enlaces.
+     */
     private void updateLinksInsideMovedDirectory(DirectoryNode directory, String oldPath, String newPath) {
         for (Map.Entry<String, LinkNode> link : directory.getLinks().entrySet()) {
             String target = link.getValue().getTarget();
@@ -609,7 +764,12 @@ public class DirectoryTree {
             updateLinksInsideMovedDirectory(child, oldPath, newPath);
         }
     }
-
+    /**
+     * Crea un archivo en el árbol a partir de un registro de archivo.
+     * @param parentPath La ruta del directorio padre donde se creará el archivo.
+     * @param name El nombre del archivo a crear.
+     * @param record El registro de archivo que contiene la información del archivo.
+     */
     private void createFileFromRecord(String parentPath, String name, FileRecord record) {
         validateName(name);
 
@@ -635,7 +795,12 @@ public class DirectoryTree {
         FileNode file = new FileNode(fcb);
         parent.addFile(file);
     }
-
+    /**
+     * Crea un enlace en el árbol a partir de un registro de enlace.
+     * @param parentPath La ruta del directorio padre donde se creará el enlace.
+     * @param name El nombre del enlace a crear.
+     * @param record El registro de enlace que contiene la información del enlace.
+     */
     private void createLinkFromRecord(String parentPath, String name, LinkRecord record) {
         validateName(name);
 
@@ -649,7 +814,11 @@ public class DirectoryTree {
         LinkNode link = new LinkNode(name, record.owner, record.group, record.target);
         parent.addLink(link);
     }
-
+    /**
+     * Agrega la representación en texto de un directorio y sus contenidos a un StringBuilder.
+     * @param builder El StringBuilder donde se agregará la representación en texto.
+     * @param directory El nodo del directorio que se representará en texto.
+     */
     private void appendDirectory(StringBuilder builder, DirectoryNode directory) {
         builder.append("type=DIR")
                 .append("|path=")
@@ -674,7 +843,11 @@ public class DirectoryTree {
             appendDirectory(builder, child);
         }
     }
-
+    /**
+     * Agrega la representación en texto de un archivo a un StringBuilder.
+     * @param builder El StringBuilder donde se agregará la representación en texto.
+     * @param file El nodo del archivo que se representará en texto.
+     */
     private void appendFile(StringBuilder builder, FileNode file) {
         FCB fcb = file.getFCB();
 
@@ -697,7 +870,13 @@ public class DirectoryTree {
                 .append(blocksToText(fcb.getBlocks()))
                 .append("\n");
     }
-
+    /**
+     * Agrega la representación en texto de un enlace a un StringBuilder.
+     * @param builder El StringBuilder donde se agregará la representación en texto.
+     * @param directory El nodo del directorio que contiene el enlace.
+     * @param linkName El nombre del enlace.
+     * @param link El nodo del enlace que se representará en texto.
+     */
     private void appendLink(StringBuilder builder, DirectoryNode directory, String linkName, LinkNode link) {
         builder.append("type=LINK")
                 .append("|path=")
@@ -710,7 +889,11 @@ public class DirectoryTree {
                 .append(link.getGroup())
                 .append("\n");
     }
-
+    /**
+     * Convierte una lista de bloques en una representación de texto separada por comas.
+     * @param blocks La lista de bloques a convertir.
+     * @return Una cadena de texto que representa los bloques separados por comas.
+     */
     private String blocksToText(List<Integer> blocks) {
         if (blocks == null || blocks.isEmpty()) {
             return "";
@@ -724,13 +907,20 @@ public class DirectoryTree {
 
         return String.join(",", values);
     }
-
+    /**
+     * Valida que un nombre de archivo o directorio no sea nulo, vacío o contenga caracteres inválidos.
+     * @param name El nombre a validar.
+     */
     private void validateName(String name) {
         if (name == null || name.isBlank() || name.contains("/") || ".".equals(name) || "..".equals(name)) {
             throw new IllegalArgumentException("nombre invalido: " + name);
         }
     }
-
+    /**
+     * Divide una ruta en sus partes componentes, eliminando cualquier parte vacía.
+     * @param path La ruta a dividir.
+     * @return Una lista de partes de la ruta.
+     */
     private List<String> parts(String path) {
         List<String> result = new ArrayList<>();
 
@@ -746,17 +936,30 @@ public class DirectoryTree {
 
         return result;
     }
-
+    /**
+     * Obtiene la ruta del directorio padre de una ruta dada.
+     * @param path La ruta de la que se desea obtener el directorio padre.
+     * @return La ruta del directorio padre, o "/" si no hay un directorio padre.
+     */
     private static String parentPath(String path) {
         int separator = path.lastIndexOf('/');
         return separator <= 0 ? "/" : path.substring(0, separator);
     }
-
+    /**
+     * Obtiene el nombre del archivo o directorio de una ruta dada.
+     * @param path La ruta de la que se desea obtener el nombre del archivo o directorio.
+     * @return El nombre del archivo o directorio, o la ruta completa si no hay un separador '/'.
+     */
     private static String fileName(String path) {
         int separator = path.lastIndexOf('/');
         return separator == -1 ? path : path.substring(separator + 1);
     }
-
+    /**
+     * Une un directorio padre y un nombre de archivo o directorio en una ruta completa.
+     * @param parentPath La ruta del directorio padre.
+     * @param name El nombre del archivo o directorio.
+     * @return La ruta completa combinando el directorio padre y el nombre.
+     */
     private static String joinPath(String parentPath, String name) {
         if ("/".equals(parentPath)) {
             return "/" + name;
@@ -764,7 +967,12 @@ public class DirectoryTree {
 
         return parentPath + "/" + name;
     }
-
+    /**
+     * Intenta convertir una cadena en un entero, devolviendo un valor predeterminado si la conversión falla.
+     * @param value La cadena a convertir.
+     * @param defaultValue El valor predeterminado a devolver si la conversión falla.
+     * @return El entero convertido o el valor predeterminado.
+     */
     private static int parseInt(String value, int defaultValue) {
         try {
             return Integer.parseInt(value);
@@ -772,7 +980,12 @@ public class DirectoryTree {
             return defaultValue;
         }
     }
-
+    /**
+     * Intenta convertir una cadena en un long, devolviendo un valor predeterminado si la conversión falla.
+     * @param value La cadena a convertir.
+     * @param defaultValue El valor predeterminado a devolver si la conversión falla.
+     * @return El long convertido o el valor predeterminado.
+     */
     private static long parseLong(String value, long defaultValue) {
         try {
             return Long.parseLong(value);
@@ -780,7 +993,12 @@ public class DirectoryTree {
             return defaultValue;
         }
     }
-
+    /**
+     * Intenta convertir una cadena en un booleano, devolviendo un valor predeterminado si la conversión falla.
+     * @param value La cadena a convertir.
+     * @param defaultValue El valor predeterminado a devolver si la conversión falla.
+     * @return El booleano convertido o el valor predeterminado.
+     */
     private static boolean parseBoolean(String value, boolean defaultValue) {
         if (value == null) {
             return defaultValue;
@@ -788,7 +1006,11 @@ public class DirectoryTree {
 
         return Boolean.parseBoolean(value);
     }
-
+    /**
+     * Convierte una cadena de bloques separados por comas en una lista de enteros.
+     * @param value La cadena que contiene los bloques separados por comas.
+     * @return Una lista de enteros representando los bloques.
+     */
     private static ArrayList<Integer> parseBlocks(String value) {
         ArrayList<Integer> blocks = new ArrayList<>();
 
@@ -806,7 +1028,9 @@ public class DirectoryTree {
 
         return blocks;
     }
-
+    /**
+     * Clase interna que representa un registro de directorio con su ruta, propietario, grupo y permisos.
+     */
     private static class DirectoryRecord {
 
         private final String path;
@@ -828,7 +1052,11 @@ public class DirectoryTree {
 
             return fromLegacyLine(line);
         }
-
+        /**
+         * Crea un registro de directorio a partir de una línea de texto con formato de tubería.
+         * @param line La línea de texto que contiene la información del directorio.
+         * @return Un objeto DirectoryRecord con la información extraída de la línea.
+         */
         private static DirectoryRecord fromPipeLine(String line) {
             String path = "/";
             String owner = SystemConstants.ROOT_USERNAME;
@@ -858,7 +1086,11 @@ public class DirectoryTree {
 
             return new DirectoryRecord(path, owner, group, permissions);
         }
-
+        /**
+         * Crea un registro de directorio a partir de una línea de texto con formato heredado (separado por comas).
+         * @param line La línea de texto que contiene la información del directorio.
+         * @return Un objeto DirectoryRecord con la información extraída de la línea, o null si no se encuentra la ruta.
+         */
         private static DirectoryRecord fromLegacyLine(String line) {
             Map<String, String> values = new java.util.LinkedHashMap<>();
 
@@ -884,7 +1116,7 @@ public class DirectoryTree {
             );
         }
     }
-
+    
     private static class FileRecord {
 
         private final String path;
@@ -907,7 +1139,7 @@ public class DirectoryTree {
             this.open = open;
             this.blocks = blocks;
         }
-
+        
         private static FileRecord fromLine(String line) {
             Map<String, String> values = new java.util.LinkedHashMap<>();
 

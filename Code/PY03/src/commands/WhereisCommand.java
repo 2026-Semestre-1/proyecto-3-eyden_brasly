@@ -22,6 +22,12 @@ public class WhereisCommand implements Command {
     public String getDescription() {
         return "Busca un archivo por nombre desde una ruta especifica.";
     }
+    /**
+     * Ejecuta el comando whereis, buscando archivos por nombre desde una ruta indicada o desde la raíz.
+     * @param args Los argumentos del comando, donde args[0] es el nombre del archivo a buscar y args[1] es opcionalmente la ruta de inicio para la búsqueda.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length == 0 || args.length > 2) {

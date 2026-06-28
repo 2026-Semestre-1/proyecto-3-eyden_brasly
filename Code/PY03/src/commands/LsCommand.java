@@ -24,6 +24,12 @@ public class LsCommand implements Command {
         return "Lista el contenido del directorio actual o indicado.";
     }
 
+    /**
+     * Ejecuta el comando ls, listando el contenido de un directorio.
+     * @param args Los argumentos del comando, donde args[0] es el nombre del directorio (opcional).
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         boolean recursive = false;
@@ -64,7 +70,10 @@ public class LsCommand implements Command {
             listDirectory(directory);
         }
     }
-
+    /**
+     * Lista el contenido de un directorio, mostrando subdirectorios, archivos y enlaces.
+     * @param directory El directorio cuyo contenido se desea listar.
+     */
     private void listDirectory(DirectoryNode directory) {
         boolean emptyDirectories = directory.getDirectories().isEmpty();
         boolean emptyFiles = directory.getFiles().isEmpty();
@@ -88,6 +97,11 @@ public class LsCommand implements Command {
         }
     }
 
+    /**
+     * Lista el contenido de un directorio de forma recursiva.
+     * @param session La sesión de terminal actual.
+     * @param directory El directorio cuyo contenido se desea listar.
+     */
     private void listRecursive(TerminalSession session, DirectoryNode directory) {
         System.out.println(directory.getPath() + ":");
         listDirectory(directory);

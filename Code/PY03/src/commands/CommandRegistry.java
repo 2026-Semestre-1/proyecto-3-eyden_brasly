@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- *
+ * Registro de comandos que permite registrar y buscar comandos por nombre.
  * @author eyden
  */
 public class CommandRegistry {

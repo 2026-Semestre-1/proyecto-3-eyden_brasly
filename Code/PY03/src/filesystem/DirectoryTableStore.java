@@ -9,6 +9,13 @@ import java.nio.charset.StandardCharsets;
  * Persistencia de la tabla de directorios en los bloques reservados del disco.
  */
 public class DirectoryTableStore {
+
+    /**
+     * Carga el arbol de directorios desde los bloques reservados del disco.
+     * @param disk disco virtual de donde leer
+     * @return arbol de directorios restaurado
+     * @throws IOException si ocurre un error de lectura
+     */
     public DirectoryTree load(VirtualDisk disk) throws IOException {
         byte[] data = new byte[SystemConstants.DIRECTORY_TABLE_BLOCK_COUNT * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE];
 
@@ -27,6 +34,12 @@ public class DirectoryTableStore {
         return DirectoryTree.fromText(text);
     }
 
+    /**
+     * Guarda el arbol de directorios en los bloques reservados del disco.
+     * @param disk           disco virtual donde escribir
+     * @param directoryTree  arbol de directorios a persistir
+     * @throws IOException si los datos exceden el espacio reservado
+     */
     public void save(VirtualDisk disk, DirectoryTree directoryTree) throws IOException {
         byte[] data = directoryTree.toText().getBytes(StandardCharsets.UTF_8);
         int maxSize = SystemConstants.DIRECTORY_TABLE_BLOCK_COUNT * SystemConstants.VIRTUAL_DISK_BLOCK_SIZE;

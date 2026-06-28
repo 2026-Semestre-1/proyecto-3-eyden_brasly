@@ -27,7 +27,12 @@ public class NoteCommand implements Command {
     public String getDescription() {
         return "Edita el contenido de un archivo de texto.";
     }
-
+    /**
+     * Ejecuta el comando note, permitiendo al usuario editar el contenido de un archivo de texto.
+     * @param args Los argumentos del comando, donde args[0] es el nombre del archivo a editar.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length != 1) {
@@ -76,7 +81,10 @@ public class NoteCommand implements Command {
             FileCommandSupport.closeFile(session, file, getName());
         }
     }
-
+    /**
+     * Muestra el contenido actual del archivo y un mensaje indicando cómo finalizar la edición.
+     * @param content El contenido actual del archivo a mostrar.
+     */
     private void showCurrentContent(String content) {
         System.out.println("--- Contenido actual ---");
         if (content.isEmpty()) {
@@ -90,7 +98,11 @@ public class NoteCommand implements Command {
         System.out.println("--- Nuevo contenido ---");
         System.out.println("Finalice con Ctrl+X.");
     }
-
+    /**
+     * Lee el contenido editado por el usuario hasta que se ingrese Ctrl+X o el comando de salida.
+     * @param scanner El escáner para leer la entrada del usuario.
+     * @return El contenido editado por el usuario, o null si la edición fue cancelada.
+     */
     private String readEditedContent(Scanner scanner) {
         StringBuilder content = new StringBuilder();
         boolean firstLine = true;
@@ -117,7 +129,12 @@ public class NoteCommand implements Command {
 
         return null;
     }
-
+    /**
+     * Agrega una línea al contenido editado, asegurando que se agregue un salto de línea entre líneas.
+     * @param content El StringBuilder que contiene el contenido editado.
+     * @param line La línea a agregar al contenido.
+     * @param firstLine Indica si es la primera línea que se está agregando.
+     */
     private void appendLine(StringBuilder content, String line, boolean firstLine) {
         if (!firstLine) {
             content.append(System.lineSeparator());

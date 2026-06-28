@@ -5,7 +5,10 @@ import app.TerminalSession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
+/**
+ * Comando que muestra la ayuda de los comandos disponibles en la terminal.
+ * @author eyden
+ */
 public class HelpCommand implements Command {
     private static final int COMMAND_WIDTH = 40;
     private static final List<HelpEntry> ENTRIES = new ArrayList<>();
@@ -69,7 +72,10 @@ public class HelpCommand implements Command {
 
         printGeneralHelp(session);
     }
-
+    /**
+     * Imprime la ayuda general con la lista de comandos disponibles.
+     * @param session La sesión de terminal actual.
+     */
     private void printGeneralHelp(TerminalSession session) {
         boolean initMode = session.getMode() == SystemMode.NO_FORMATTED;
         String currentSection = "";
@@ -133,10 +139,21 @@ public class HelpCommand implements Command {
         printExamples(entry.name);
     }
 
+    /**
+     * Agrega una entrada de ayuda a la lista de entradas disponibles.
+     * @param section La sección a la que pertenece el comando.
+     * @param name El nombre del comando.
+     * @param usage La sintaxis del comando.
+     * @param description La descripción del comando.
+     */
     private static void add(String section, String name, String usage, String description) {
         ENTRIES.add(new HelpEntry(section, name, usage, description));
     }
-
+    /**
+     * Busca una entrada de ayuda por el nombre del comando.
+     * @param commandName El nombre del comando a buscar.
+     * @return La entrada de ayuda correspondiente, o null si no se encuentra.
+     */
     private HelpEntry findEntry(String commandName) {
         for (HelpEntry entry : ENTRIES) {
             if (entry.name.equals(commandName)) {
@@ -152,7 +169,11 @@ public class HelpCommand implements Command {
 
         return null;
     }
-
+    /**
+     * Verifica si un comando es permitido en el modo de inicialización (NO_FORMATTED).
+     * @param commandName El nombre del comando a verificar.
+     * @return true si el comando es permitido, false en caso contrario.
+     */
     private boolean isAllowedInInitMode(String commandName) {
         return "format".equals(commandName)
                 || "exit".equals(commandName)

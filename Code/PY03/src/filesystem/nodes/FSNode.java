@@ -15,6 +15,12 @@ public abstract class FSNode {
     private String owner;
     private String group;
 
+    /**
+     * Constructor base para un nodo del sistema de archivos.
+     * @param name  nombre del nodo
+     * @param owner propietario del nodo
+     * @param group grupo propietario del nodo
+     */
     protected FSNode(String name, String owner, String group) {
         this.name = name;
         this.owner = owner;
@@ -41,5 +47,9 @@ public abstract class FSNode {
         this.group = group;
     }
 
+    /**
+     * Indica si este nodo representa un directorio.
+     * @return true si es directorio, false si es archivo
+     */
     public abstract boolean isDirectory();
 }

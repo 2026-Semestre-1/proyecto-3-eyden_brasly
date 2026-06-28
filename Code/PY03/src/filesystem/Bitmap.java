@@ -23,6 +23,10 @@ public class Bitmap {
     private final int totalBlocks;
     private final BitSet usedBlocks;
 
+    /**
+     * Crea un bitmap con todos los bloques marcados como libres.
+     * @param totalBlocks cantidad total de bloques del disco
+     */
     public Bitmap(int totalBlocks) {
         this.totalBlocks = totalBlocks;
         this.usedBlocks = new BitSet(totalBlocks);
@@ -33,34 +37,65 @@ public class Bitmap {
         this.usedBlocks = usedBlocks;
     }
 
+    /**
+     * Marca un bloque como ocupado.
+     * @param blockNumber numero del bloque a marcar
+     */
     public void markUsed(int blockNumber) {
         validateBlock(blockNumber);
         usedBlocks.set(blockNumber);
     }
 
+    /**
+     * Marca un bloque como libre.
+     * @param blockNumber numero del bloque a liberar
+     */
     public void markFree(int blockNumber) {
         validateBlock(blockNumber);
         usedBlocks.clear(blockNumber);
     }
 
+    /**
+     * Verifica si un bloque esta libre.
+     * @param blockNumber numero del bloque a consultar
+     * @return true si el bloque esta libre, false si esta ocupado
+     */
     public boolean isFree(int blockNumber) {
         validateBlock(blockNumber);
         return !usedBlocks.get(blockNumber);
     }
 
+    /**
+     * Busca el primer bloque libre en el bitmap.
+     * @return numero del primer bloque libre, o -1 si no hay bloques libres
+     */
     public int findFirstFree() {
         int blockNumber = usedBlocks.nextClearBit(0);
         return blockNumber < totalBlocks ? blockNumber : -1;
     }
 
+    /**
+     * Cuenta cuantos bloques estan libres.
+     * @return cantidad de bloques libres
+     */
     public int countFreeBlocks() {
         return totalBlocks - countUsedBlocks();
     }
 
+    /**
+     * Cuenta cuantos bloques estan ocupados.
+     * @return cantidad de bloques ocupados
+     */
     public int countUsedBlocks() {
         return usedBlocks.get(0, totalBlocks).cardinality();
     }
 
+    /**
+     * Serializa el bitmap a un arreglo de bytes con el tamaño especificado.
+     * Usa serializacion raw si hay espacio suficiente, o serializacion por rangos si no.
+     * @param outputSize tamaño en bytes del arreglo de salida
+     * @return arreglo de bytes con el bitmap serializado
+     */
     public byte[] toBytes(int outputSize) {
         if (canUseRawSerialization(outputSize)) {
             return toRawBytes(outputSize);
@@ -105,6 +140,12 @@ public class Bitmap {
         return data;
     }
 
+    /**
+     * Deserializa un bitmap a partir de un arreglo de bytes.
+     * Detecta automaticamente si los datos estan en formato raw o por rangos.
+     * @param data arreglo de bytes con el bitmap serializado
+     * @return objeto Bitmap restaurado
+     */
     public static Bitmap fromBytes(byte[] data) {
         if (data == null || data.length < Integer.BYTES) {
             throw new IllegalArgumentException("los datos del bitmap son invalidos.");

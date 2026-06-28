@@ -22,7 +22,12 @@ public class PasswdCommand implements Command {
     public String getDescription() {
         return "Cambia la contrasena de un usuario.";
     }
-
+    /**
+     * Ejecuta el comando passwd, permitiendo al usuario cambiar su propia contraseña o la de otro usuario si tiene privilegios.
+     * @param args Los argumentos del comando, donde args[0] es opcional y representa el nombre del usuario cuya contraseña se desea cambiar.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length > 1) {

@@ -9,7 +9,7 @@ import filesystem.nodes.DirectoryTree;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que permite cambiar el directorio actual en la sesión de terminal.
  * @author eyden
  */
 public class CdCommand implements Command {
@@ -22,7 +22,12 @@ public class CdCommand implements Command {
     public String getDescription() {
         return "Cambia el directorio actual.";
     }
-
+    /**
+     * Ejecuta el comando cd, cambiando el directorio actual de la sesión de terminal.
+     * @param args Los argumentos del comando, donde args[0] es el directorio al que se desea cambiar.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length > 1) {

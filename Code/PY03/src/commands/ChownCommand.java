@@ -27,7 +27,12 @@ public class ChownCommand implements Command {
     public String getDescription() {
         return "Cambia el dueno de archivos o directorios.";
     }
-
+    /**
+     * Ejecuta el comando chown, cambiando el dueno de archivos o directorios especificados.
+     * @param args Los argumentos del comando, donde args[0] es el nuevo dueno y los siguientes son los archivos o directorios a modificar.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         boolean recursive = args.length > 0 && "-R".equals(args[0]);
@@ -69,7 +74,12 @@ public class ChownCommand implements Command {
             }
         }
     }
-
+    /**
+     * Cambia el dueno de un directorio y todos sus hijos de manera recursiva.
+     * @param dir El directorio cuyo dueno se desea cambiar.
+     * @param newOwner El nuevo dueno a asignar.
+     * @return true si se cambió al menos un dueno, false en caso contrario.
+     */
     private boolean changeOwnerRecursive(DirectoryNode dir, String newOwner) {
         boolean changed = false;
         for (FSNode child : dir.getChildren()) {
@@ -83,6 +93,12 @@ public class ChownCommand implements Command {
         return changed;
     }
 
+    /**
+     * Cambia el dueno de un nodo de archivo o directorio.
+     * @param node El nodo cuyo dueno se desea cambiar.
+     * @param newOwner El nuevo dueno a asignar.
+     * @return true si se cambió el dueno, false en caso contrario.
+     */
     private boolean changeOwner(FSNode node, String newOwner) {
         String path = node instanceof FileNode f ? f.getFullPath()
                 : node instanceof DirectoryNode d ? d.getPath() : node.getName();

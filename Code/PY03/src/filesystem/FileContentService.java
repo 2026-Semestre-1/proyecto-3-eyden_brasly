@@ -27,6 +27,10 @@ public class FileContentService {
     private final VirtualDisk disk;
     private final BlockManager blockManager;
 
+    /**
+     * Crea el servicio asociado a un sistema de archivos.
+     * @param fileSystem sistema de archivos al que pertenece
+     */
     public FileContentService(FileSystem fileSystem) {
         this.fileSystem = Objects.requireNonNull(fileSystem, "fileSystem no puede ser null");
         this.disk = fileSystem.getDisk();

@@ -25,7 +25,12 @@ public class TouchCommand implements Command {
     public String getDescription() {
         return "Crea archivos vacios.";
     }
-
+    /**
+     * Ejecuta el comando touch, creando uno o varios archivos vacíos en el sistema de archivos.
+     * @param args Los argumentos del comando, donde args[0] es la ruta del archivo a crear y args[1] es opcionalmente la ruta de otro archivo a crear.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length == 0) {

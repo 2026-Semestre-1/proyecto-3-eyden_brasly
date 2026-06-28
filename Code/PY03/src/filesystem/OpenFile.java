@@ -16,6 +16,12 @@ public class OpenFile {
     private final long openedAt;
     private int openCount;
 
+    /**
+     * Crea un registro de archivo abierto con datos completos.
+     * @param path     ruta del archivo
+     * @param username usuario que abrio el archivo
+     * @param mode     modo de apertura (lectura/escritura)
+     */
     public OpenFile(String path, String username, String mode) {
         this.path = path;
         this.username = username;
@@ -24,6 +30,10 @@ public class OpenFile {
         this.openCount = 0;
     }
 
+    /**
+     * Crea un registro de archivo abierto solo con la ruta (usado para conteo global).
+     * @param path ruta del archivo
+     */
     public OpenFile(String path) {
         this.path = path;
         this.username = null;

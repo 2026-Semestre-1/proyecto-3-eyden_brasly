@@ -12,7 +12,12 @@ final class CommandIO {
         System.out.print(message);
         return scanner.hasNextLine() ? scanner.nextLine().trim() : "";
     }
-
+    /**
+     * Lee una contraseña de manera segura desde la entrada estándar, ocultando la entrada del usuario.
+     * @param scanner El escáner para leer la entrada del usuario.
+     * @param message El mensaje a mostrar al usuario antes de leer la contraseña.
+     * @return La contraseña ingresada por el usuario como una cadena de texto.
+     */
     static String readPassword(Scanner scanner, String message) {
         Console console = System.console();
 

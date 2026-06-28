@@ -25,7 +25,12 @@ public class ViewFCBCommand implements Command {
     public String getDescription() {
         return "Muestra la informacion del FCB de un archivo.";
     }
-
+    /**
+     * Ejecuta el comando viewFCB, mostrando los atributos estructurales del FCB de un archivo especificado.
+     * @param args Los argumentos del comando, donde args[0] debe ser el nombre del archivo.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length != 1) {

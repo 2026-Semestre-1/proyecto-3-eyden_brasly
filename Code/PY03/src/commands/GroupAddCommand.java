@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que crea un grupo nuevo en el sistema de archivos.
  * @author eyden
  */
 public class GroupAddCommand implements Command {
@@ -22,7 +22,12 @@ public class GroupAddCommand implements Command {
     public String getDescription() {
         return "Crea un grupo nuevo.";
     }
-
+    /**
+     * Ejecuta el comando groupadd, creando un grupo nuevo en el sistema de archivos.
+     * @param args Los argumentos del comando, donde args[0] puede ser el nombre del grupo.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (!session.isPrivileged()) {

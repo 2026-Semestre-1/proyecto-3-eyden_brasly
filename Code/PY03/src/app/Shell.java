@@ -9,7 +9,7 @@ import commands.CommandRegistry;
 import java.util.Scanner;
 
 /**
- *
+ * Clase que representa un shell interactivo para ejecutar comandos en una sesión de terminal.
  * @author eyden
  */
 public class Shell {
@@ -24,7 +24,9 @@ public class Shell {
         this.parser = new CommandParser();
         this.scanner = scanner;
     }
-
+    /**
+     * Inicia el shell interactivo, leyendo comandos desde la entrada estándar y ejecutándolos.
+     */
     public void start() {
         while (session.isRunning()) {
             System.out.print(session.getPrompt());
@@ -53,7 +55,11 @@ public class Shell {
             command.execute(parsedCommand.getArgs(), session, scanner);
         }
     }
-
+    /**
+     * Verifica si un comando es permitido en el modo de inicialización (NO_FORMATTED).
+     * @param commandName El nombre del comando a verificar.
+     * @return true si el comando es permitido, false en caso contrario.
+     */
     private boolean isAllowedInInitMode(String commandName) {
         return "format".equals(commandName)
                 || "exit".equals(commandName)

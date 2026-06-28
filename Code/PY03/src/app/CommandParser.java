@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
+ * Clase encargada de parsear una linea de comando en un nombre de comando y sus argumentos.
  * @author eyden
  */
 public class CommandParser {
@@ -24,7 +24,11 @@ public class CommandParser {
         String[] args = tokens.subList(1, tokens.size()).toArray(String[]::new);
         return new ParsedCommand(commandName, args);
     }
-
+    /**
+     * Tokeniza una linea de comando en tokens, respetando comillas simples y dobles.
+     * @param line La linea de comando a tokenizar.
+     * @return Una lista de tokens.
+     */
     private List<String> tokenize(String line) {
         if (line.isEmpty()) {
             return Collections.emptyList();
@@ -55,14 +59,20 @@ public class CommandParser {
         addToken(tokens, current);
         return tokens;
     }
-
+    /**
+     * Agrega un token a la lista de tokens si el StringBuilder actual no está vacío.
+     * @param tokens La lista de tokens.
+     * @param current El StringBuilder que contiene el token actual.
+     */
     private void addToken(List<String> tokens, StringBuilder current) {
         if (current.length() > 0) {
             tokens.add(current.toString());
             current.setLength(0);
         }
     }
-
+    /**
+     * Clase que representa un comando parseado, con su nombre y argumentos.
+     */
     public static class ParsedCommand {
         private final String name;
         private final String[] args;

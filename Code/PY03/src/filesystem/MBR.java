@@ -28,6 +28,12 @@ public class MBR {
     private final int userTableStartBlock;
     private final int rootDirectoryStartBlock;
 
+    /**
+     * Crea un MBR con los valores por defecto tomados de SystemConstants.
+     * @param diskSizeMB         tamano del disco en megabytes
+     * @param totalBlocks        cantidad total de bloques
+     * @param allocationStrategy estrategia de asignacion
+     */
     public MBR(int diskSizeMB, int totalBlocks, AllocationStrategy allocationStrategy) {
         this(
                 SystemConstants.FILE_SYSTEM_SIGNATURE,
@@ -67,10 +73,18 @@ public class MBR {
         this.rootDirectoryStartBlock = rootDirectoryStartBlock;
     }
 
+    /**
+     * Verifica si la firma del MBR coincide con la firma esperada del sistema de archivos.
+     * @return true si la firma es valida
+     */
     public boolean hasValidSignature() {
         return SystemConstants.FILE_SYSTEM_SIGNATURE.equals(signature);
     }
 
+    /**
+     * Serializa el MBR a un arreglo de bytes con formato clave=valor.
+     * @return arreglo de bytes del tamano de un bloque
+     */
     public byte[] toBytes() {
         String data = ""
                 + "signature=" + signature + "\n"
@@ -87,6 +101,11 @@ public class MBR {
         return toFixedBlock(data);
     }
 
+    /**
+     * Deserializa un MBR desde un arreglo de bytes con formato clave=valor.
+     * @param bytes datos del bloque leido del disco
+     * @return objeto MBR restaurado, o null si los datos estan vacios
+     */
     public static MBR fromBytes(byte[] bytes) {
         Map<String, String> values = parseBlock(bytes);
         if (values.isEmpty()) {
@@ -114,6 +133,11 @@ public class MBR {
         return block;
     }
 
+    /**
+     * Parsea un bloque de bytes con lineas clave=valor a un mapa.
+     * @param bytes datos del bloque
+     * @return mapa con las claves y valores extraidos
+     */
     static Map<String, String> parseBlock(byte[] bytes) {
         String data = new String(bytes, StandardCharsets.UTF_8).replace("\0", "").trim();
         Map<String, String> values = new LinkedHashMap<>();

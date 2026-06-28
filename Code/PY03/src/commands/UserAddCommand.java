@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que permite crear un nuevo usuario en el sistema.
  * @author eyden
  */
 public class UserAddCommand implements Command {
@@ -23,7 +23,12 @@ public class UserAddCommand implements Command {
     public String getDescription() {
         return "Crea un usuario nuevo.";
     }
-
+    /**
+     * Ejecuta el comando useradd, permitiendo al usuario crear un nuevo usuario en el sistema.
+     * @param args Los argumentos del comando, donde args[0] es opcionalmente el nombre del usuario a crear.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario.
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (!session.isPrivileged()) {
@@ -62,7 +67,11 @@ public class UserAddCommand implements Command {
             System.out.println("useradd: usuario creado en sesion, pero no se pudo guardar: " + exception.getMessage());
         }
     }
-
+    /**
+     * Crea el directorio home del usuario especificado si no existe.
+     * @param session La sesión de terminal actual.
+     * @param username El nombre del usuario cuyo directorio home se desea crear.
+     */
     private void createHomeDirectory(TerminalSession session, String username) {
         DirectoryTree directoryTree = session.getFileSystem().getDirectoryTree();
         String homePath = "/user/" + username;

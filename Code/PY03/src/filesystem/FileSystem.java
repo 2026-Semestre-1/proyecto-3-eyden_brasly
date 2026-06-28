@@ -32,6 +32,16 @@ public class FileSystem {
     private final UserTableStore userTableStore;
     private final OpenFileTable openFileTable;
 
+    /**
+     * Crea el sistema de archivos montado con todas sus estructuras cargadas.
+     * @param disk              disco virtual subyacente
+     * @param mbr               registro maestro de arranque
+     * @param superBlock        superbloque del sistema de archivos
+     * @param bitmap            bitmap de bloques
+     * @param blockManager      administrador de bloques
+     * @param rootPasswordHash  hash de la contrasena de root
+     * @param directoryTree     arbol de directorios
+     */
     public FileSystem(
             VirtualDisk disk,
             MBR mbr,
@@ -91,30 +101,68 @@ public class FileSystem {
         return directoryTree;
     }
 
+    /**
+     * Persiste el arbol de directorios en el disco.
+     * @throws IOException si ocurre un error de escritura
+     */
     public void saveDirectories() throws IOException {
         directoryTableStore.save(disk, directoryTree);
     }
 
+    /**
+     * Persiste el bitmap en el disco.
+     * @throws IOException si ocurre un error de escritura
+     */
     public void saveBitmap() throws IOException {
         bitmapStore.save(disk, bitmap);
     }
 
+    /**
+     * Carga el servicio de grupos desde el disco.
+     * @return servicio de grupos con los datos persistidos
+     * @throws IOException si ocurre un error de lectura
+     */
     public GroupService loadGroupService() throws IOException {
         return groupTableStore.load(disk);
     }
 
+    /**
+     * Carga el servicio de usuarios desde el disco.
+     * @param groupService servicio de grupos para asociar usuarios a grupos
+     * @return servicio de usuarios con los datos persistidos
+     * @throws IOException si ocurre un error de lectura
+     */
     public UserService loadUserService(GroupService groupService) throws IOException {
         return userTableStore.load(disk, groupService, rootPasswordHash);
     }
 
+    /**
+     * Persiste los grupos en el disco.
+     * @param groupService servicio de grupos con los datos a guardar
+     * @throws IOException si ocurre un error de escritura
+     */
     public void saveGroups(GroupService groupService) throws IOException {
         groupTableStore.save(disk, groupService);
     }
 
+    /**
+     * Persiste los usuarios en el disco.
+     * @param userService servicio de usuarios con los datos a guardar
+     * @throws IOException si ocurre un error de escritura
+     */
     public void saveUsers(UserService userService) throws IOException {
         userTableStore.save(disk, userService);
     }
 
+    /**
+     * Abre un archivo registrandolo en la tabla de archivos abiertos y en la sesion.
+     * @param file     archivo a abrir
+     * @param username usuario que abre el archivo
+     * @param mode     modo de apertura (lectura/escritura)
+     * @param session  sesion terminal asociada
+     * @return true si se abrio correctamente, false si ya estaba abierto
+     * @throws IOException si ocurre un error al persistir los cambios
+     */
     public boolean openFile(FileNode file, String username, String mode, TerminalSession session) throws IOException {
         String path = file.getFullPath();
 
@@ -147,6 +195,12 @@ public class FileSystem {
         }
     }
 
+    /**
+     * Cierra un archivo y lo elimina de la tabla de archivos abiertos y la sesion.
+     * @param file    archivo a cerrar
+     * @param session sesion terminal asociada
+     * @throws IOException si ocurre un error al persistir los cambios
+     */
     public void closeFile(FileNode file, TerminalSession session) throws IOException {
         String path = file.getFullPath();
         session.removeProcessOpenFile(path);

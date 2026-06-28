@@ -8,7 +8,7 @@ import app.TerminalSession;
 import java.util.Scanner;
 
 /**
- *
+ * Comando que finaliza la terminal.
  * @author eyden
  */
 public class ExitCommand implements Command {

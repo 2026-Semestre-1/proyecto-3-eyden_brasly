@@ -26,7 +26,12 @@ public class ChmodCommand implements Command {
     public String getDescription() {
         return "Cambia permisos de archivos o directorios.";
     }
-
+    /**
+     * Ejecuta el comando chmod, cambiando los permisos de archivos o directorios especificados.
+     * @param args Los argumentos del comando, donde args[0] es el nuevo permiso y los siguientes son los archivos o directorios a modificar.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length < 2) {

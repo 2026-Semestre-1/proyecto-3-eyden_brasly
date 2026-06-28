@@ -23,7 +23,12 @@ public class MkdirCommand implements Command {
     public String getDescription() {
         return "Crea uno o varios directorios.";
     }
-
+    /**
+     * Ejecuta el comando mkdir, creando uno o varios directorios especificados.
+     * @param args Los argumentos del comando, donde cada argumento es el nombre de un directorio a crear.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length == 0) {

@@ -16,6 +16,16 @@ import security.UserService.UserAccount;
  * @author eyden
  */
 public class UserTableStore {
+
+    /**
+     * Carga los usuarios desde los bloques reservados del disco.
+     * Soporta tanto el formato actual como el legado de root.
+     * @param disk                     disco virtual de donde leer
+     * @param groupService             servicio de grupos para asociar usuarios
+     * @param fallbackRootPasswordHash hash de root por defecto si no se encuentra
+     * @return servicio de usuarios con los registros restaurados
+     * @throws IOException si los datos son invalidos
+     */
     public UserService load(VirtualDisk disk, GroupService groupService, String fallbackRootPasswordHash) throws IOException {
         String text = readText(disk);
         List<UserAccount> records = new ArrayList<>();
@@ -40,6 +50,12 @@ public class UserTableStore {
         }
     }
 
+    /**
+     * Lee unicamente el hash de la contrasena de root desde el disco.
+     * @param disk disco virtual de donde leer
+     * @return hash de la contrasena de root
+     * @throws IOException si no se encuentra el hash
+     */
     public String readRootPasswordHash(VirtualDisk disk) throws IOException {
         String text = readText(disk);
 
@@ -61,6 +77,12 @@ public class UserTableStore {
         throw new IOException("no se encontro la contrasena de root en la tabla de usuarios.");
     }
 
+    /**
+     * Guarda los usuarios en los bloques reservados del disco.
+     * @param disk        disco virtual donde escribir
+     * @param userService servicio de usuarios con los datos a persistir
+     * @throws IOException si los datos exceden el espacio reservado
+     */
     public void save(VirtualDisk disk, UserService userService) throws IOException {
         StringBuilder builder = new StringBuilder();
 

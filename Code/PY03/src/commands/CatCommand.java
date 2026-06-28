@@ -24,7 +24,12 @@ public class CatCommand implements Command {
     public String getDescription() {
         return "Muestra el contenido completo de un archivo.";
     }
-
+    /**
+     * Ejecuta el comando cat, mostrando el contenido de un archivo especificado.
+     * @param args Los argumentos del comando, donde args[0] debe ser el nombre del archivo.
+     * @param session La sesión de terminal actual.
+     * @param scanner El escáner para leer la entrada del usuario (no se utiliza en este comando).
+     */
     @Override
     public void execute(String[] args, TerminalSession session, Scanner scanner) {
         if (args.length != 1) {
