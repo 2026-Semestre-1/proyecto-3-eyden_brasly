@@ -161,7 +161,6 @@ public class TerminalManagerFrame extends JFrame {
         sidebarActionsPanel.setBorder(new EmptyBorder(4, 8, 4, 8));
         sidebarActionsPanel.add(sidebarButton("Terminal", () -> showView(TERMINAL_VIEW)));
         sidebarActionsPanel.add(sidebarButton("Mapa de disco", () -> showView(DISK_MAP_VIEW)));
-        sidebarActionsPanel.add(sidebarButton("Defragmentar", this::showDefragPending));
         sidebarActionsPanel.add(sidebarButton("Ajustes", () -> showView(SETTINGS_VIEW)));
         sidebarPanel.add(sidebarActionsPanel, BorderLayout.CENTER);
 
@@ -217,7 +216,6 @@ public class TerminalManagerFrame extends JFrame {
         JMenu menu = new JMenu("Disco");
         menu.add(item("Ver informacion del sistema de archivos", () -> submitCommand("infoFS")));
         menu.add(item("Ver mapa de bloques", () -> showView(DISK_MAP_VIEW)));
-        menu.add(item("Defragmentar disco", this::showDefragPending));
         menu.addSeparator();
         menu.add(item("Ver FCB de archivo", this::runViewFcb));
         menu.add(item("Ver archivos abiertos", () -> submitCommand("viewFilesOpen")));
@@ -372,16 +370,6 @@ public class TerminalManagerFrame extends JFrame {
         if (filename != null && !filename.isBlank()) {
             submitCommand("viewFCB " + filename.trim());
         }
-    }
-
-    private void showDefragPending() {
-        showView(DISK_MAP_VIEW);
-        JOptionPane.showMessageDialog(
-                this,
-                "La vista esta preparada, pero el core todavia no tiene comando de defragmentacion.",
-                "Defragmentar disco",
-                JOptionPane.INFORMATION_MESSAGE
-        );
     }
 
     private void showAbout() {

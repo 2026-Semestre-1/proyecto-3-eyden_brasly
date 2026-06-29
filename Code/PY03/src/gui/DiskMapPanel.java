@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -42,7 +41,6 @@ public class DiskMapPanel extends JPanel {
     private static final Color USED_COLOR = new Color(79, 134, 224);
     private static final Color RESERVED_COLOR = new Color(154, 85, 200);
     private static final Color SELECTED_COLOR = new Color(242, 201, 76);
-    private static final Color FRAGMENTED_COLOR = new Color(224, 101, 79);
 
     private final Supplier<TerminalPanel> terminalSupplier;
     private final DiskGridPanel gridPanel;
@@ -88,25 +86,6 @@ public class DiskMapPanel extends JPanel {
         titleLabel = new JLabel("Mapa de Disco");
         titleLabel.setFont(new Font(Font.MONOSPACED, Font.BOLD, 14));
         headerPanel.add(titleLabel, BorderLayout.WEST);
-
-        JPanel actions = new JPanel(new GridLayout(1, 3, 6, 0));
-        actions.setOpaque(false);
-        JButton refreshButton = new JButton("Actualizar mapa");
-        JButton defragButton = new JButton("Defragmentar disco");
-        JButton detailsButton = new JButton("Detalles del bloque");
-        GuiStyles.styleActionButton(refreshButton, theme);
-        GuiStyles.styleActionButton(defragButton, theme);
-        GuiStyles.styleActionButton(detailsButton, theme);
-        refreshButton.addActionListener(event -> refresh());
-        defragButton.addActionListener(event -> updateTable(blockDetailsModel, new String[][]{
-            {"Defragmentar", "Pendiente en el core"},
-            {"Detalle", "Vista preparada para el comando final"}
-        }));
-        detailsButton.addActionListener(event -> showSelectedBlockDetails());
-        actions.add(refreshButton);
-        actions.add(defragButton);
-        actions.add(detailsButton);
-        headerPanel.add(actions, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
 
         gridScroll = new JScrollPane(gridPanel);
@@ -164,14 +143,13 @@ public class DiskMapPanel extends JPanel {
     }
 
     private JPanel buildLegend() {
-        legendPanel = new JPanel(new GridLayout(5, 1, 4, 4));
+        legendPanel = new JPanel(new GridLayout(4, 1, 4, 4));
         legendPanel.setBackground(theme.getSurface());
         legendPanel.setBorder(BorderFactory.createEmptyBorder(8, 12, 12, 12));
         legendPanel.add(legendItem("Disponible", FREE_COLOR));
         legendPanel.add(legendItem("Ocupado", USED_COLOR));
         legendPanel.add(legendItem("Reservado", RESERVED_COLOR));
         legendPanel.add(legendItem("Archivo seleccionado", SELECTED_COLOR));
-        legendPanel.add(legendItem("Fragmentado", FRAGMENTED_COLOR));
         return legendPanel;
     }
 
@@ -282,10 +260,6 @@ public class DiskMapPanel extends JPanel {
                 || normalizedField.equals("uso") || normalizedValue.equals("ocupado")) {
             return USED_COLOR;
         }
-        if (normalizedField.contains("fragmentacion") || normalizedField.contains("fragmentados")
-                || normalizedValue.equals("fragmentado")) {
-            return FRAGMENTED_COLOR;
-        }
         if (normalizedValue.equals("reservado")) {
             return RESERVED_COLOR;
         }
@@ -324,13 +298,6 @@ public class DiskMapPanel extends JPanel {
         updateTable(statsModel, snapshot.statsRows());
         updateTable(blockDetailsModel, snapshot.selectedBlockRows());
         gridPanel.setSnapshot(snapshot);
-    }
-
-    private void showSelectedBlockDetails() {
-        if (snapshot == null) {
-            refresh();
-        }
-        updateTable(blockDetailsModel, snapshot.selectedBlockRows());
     }
 
     @SuppressWarnings("serial")
@@ -412,10 +379,8 @@ public class DiskMapPanel extends JPanel {
         private final int blockSize;
         private final boolean[] used;
         private final boolean[] reserved;
-        private final boolean[] fragmented;
         private final Map<Integer, FileNode> ownersByBlock;
         private final Set<Integer> selectedFileBlocks;
-        private final int fragmentedFiles;
         private final String message;
         private int selectedBlock;
 
@@ -427,10 +392,8 @@ public class DiskMapPanel extends JPanel {
                 int blockSize,
                 boolean[] used,
                 boolean[] reserved,
-                boolean[] fragmented,
                 Map<Integer, FileNode> ownersByBlock,
                 Set<Integer> selectedFileBlocks,
-                int fragmentedFiles,
                 String message
         ) {
             this.totalBlocks = totalBlocks;
@@ -440,10 +403,8 @@ public class DiskMapPanel extends JPanel {
             this.blockSize = blockSize;
             this.used = used;
             this.reserved = reserved;
-            this.fragmented = fragmented;
             this.ownersByBlock = ownersByBlock;
             this.selectedFileBlocks = selectedFileBlocks;
-            this.fragmentedFiles = fragmentedFiles;
             this.message = message;
             this.selectedBlock = 0;
         }
@@ -451,9 +412,8 @@ public class DiskMapPanel extends JPanel {
         static DiskSnapshot empty(String message) {
             boolean[] used = new boolean[1];
             boolean[] reserved = new boolean[1];
-            boolean[] fragmented = new boolean[1];
             return new DiskSnapshot(1, 0, 1, 0, SystemConstants.VIRTUAL_DISK_BLOCK_SIZE,
-                    used, reserved, fragmented, new HashMap<>(), new HashSet<>(), 0, message);
+                    used, reserved, new HashMap<>(), new HashSet<>(), message);
         }
 
         static DiskSnapshot from(FileSystem fileSystem) {
@@ -462,7 +422,6 @@ public class DiskMapPanel extends JPanel {
             int totalBlocks = bitmap.getTotalBlocks();
             boolean[] used = new boolean[totalBlocks];
             boolean[] reserved = new boolean[totalBlocks];
-            boolean[] fragmented = new boolean[totalBlocks];
 
             for (int block = 0; block < totalBlocks; block++) {
                 used[block] = !bitmap.isFree(block);
@@ -473,21 +432,11 @@ public class DiskMapPanel extends JPanel {
             List<FileNode> files = new ArrayList<>();
             collectFiles(fileSystem.getDirectoryTree().getRoot(), files);
 
-            int fragmentedFiles = 0;
             for (FileNode file : files) {
                 List<Integer> blocks = file.getFCB().getBlocks();
                 for (Integer block : blocks) {
                     if (block != null && block >= 0 && block < totalBlocks) {
                         ownersByBlock.put(block, file);
-                    }
-                }
-
-                if (isFragmented(blocks)) {
-                    fragmentedFiles++;
-                    for (Integer block : blocks) {
-                        if (block != null && block >= 0 && block < totalBlocks) {
-                            fragmented[block] = true;
-                        }
                     }
                 }
             }
@@ -500,10 +449,8 @@ public class DiskMapPanel extends JPanel {
                     superBlock.getBlockSize(),
                     used,
                     reserved,
-                    fragmented,
                     ownersByBlock,
                     new HashSet<>(),
-                    fragmentedFiles,
                     ""
             );
         }
@@ -518,9 +465,6 @@ public class DiskMapPanel extends JPanel {
             }
             if (reserved[block]) {
                 return RESERVED_COLOR;
-            }
-            if (fragmented[block]) {
-                return FRAGMENTED_COLOR;
             }
             if (used[block]) {
                 return USED_COLOR;
@@ -545,7 +489,6 @@ public class DiskMapPanel extends JPanel {
             long usedBytes = (long) usedBlocks * blockSize;
             long freeBytes = (long) freeBlocks * blockSize;
             double usage = totalBlocks == 0 ? 0.0 : usedBlocks * 100.0 / totalBlocks;
-            double fragmentation = usedBlocks == 0 ? 0.0 : fragmentedBlockCount() * 100.0 / usedBlocks;
 
             return new String[][]{
                 {"Nombre del File System", SystemConstants.FILE_SYSTEM_NAME},
@@ -555,9 +498,7 @@ public class DiskMapPanel extends JPanel {
                 {"Bloques totales", String.valueOf(totalBlocks)},
                 {"Bloques libres", String.valueOf(freeBlocks)},
                 {"Bloques ocupados", String.valueOf(usedBlocks)},
-                {"Uso", String.format("%.2f%%", usage)},
-                {"Fragmentacion", String.format("%.2f%%", fragmentation)},
-                {"Archivos fragmentados", String.valueOf(fragmentedFiles)}
+                {"Uso", String.format("%.2f%%", usage)}
             };
         }
 
@@ -568,7 +509,6 @@ public class DiskMapPanel extends JPanel {
 
             FileNode owner = ownersByBlock.get(selectedBlock);
             String state = reserved[selectedBlock] ? "Reservado"
-                    : fragmented[selectedBlock] ? "Fragmentado"
                     : used[selectedBlock] ? "Ocupado"
                     : "Libre";
 
@@ -582,35 +522,11 @@ public class DiskMapPanel extends JPanel {
             };
         }
 
-        private int fragmentedBlockCount() {
-            int count = 0;
-            for (boolean value : fragmented) {
-                if (value) {
-                    count++;
-                }
-            }
-            return count;
-        }
-
         private static void collectFiles(DirectoryNode directory, List<FileNode> files) {
             files.addAll(directory.getFiles());
             for (DirectoryNode child : directory.getDirectories()) {
                 collectFiles(child, files);
             }
-        }
-
-        private static boolean isFragmented(List<Integer> blocks) {
-            if (blocks == null || blocks.size() < 2) {
-                return false;
-            }
-
-            for (int index = 1; index < blocks.size(); index++) {
-                if (blocks.get(index) != blocks.get(index - 1) + 1) {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 
